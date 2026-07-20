@@ -17,3 +17,37 @@ impl ImageConverter for WEBPConverter {
     convert(input_path, output_path, target_format)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use image::DynamicImage;
+  use crate::core::traits::ImageConverter;
+
+  fn create_test_webp(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let path = dir.path().join("input.webp");
+    let img = DynamicImage::new_rgba8(2, 2);
+    img.save(&path).unwrap();
+    path
+  }
+
+  #[test]
+  fn webp_converter_converts_to_png() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = create_test_webp(&dir);
+    let output = dir.path().join("out.png");
+    let result = WEBPConverter.convert(&input, &output, ImageFormat::PNG);
+    assert!(result.is_ok());
+    assert!(output.exists());
+  }
+
+  #[test]
+  fn webp_converter_converts_to_jpg() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = create_test_webp(&dir);
+    let output = dir.path().join("out.jpg");
+    let result = WEBPConverter.convert(&input, &output, ImageFormat::JPG);
+    assert!(result.is_ok());
+    assert!(output.exists());
+  }
+}

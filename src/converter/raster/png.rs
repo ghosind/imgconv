@@ -17,3 +17,32 @@ impl ImageConverter for PNGConverter {
     convert(input_path, output_path, target_format)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use image::DynamicImage;
+  use crate::core::traits::ImageConverter;
+
+  #[test]
+  fn png_converter_converts_to_jpg() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("input.png");
+    DynamicImage::new_rgba8(2, 2).save(&input).unwrap();
+    let output = dir.path().join("out.jpg");
+    let result = PNGConverter.convert(&input, &output, ImageFormat::JPG);
+    assert!(result.is_ok());
+    assert!(output.exists());
+  }
+
+  #[test]
+  fn png_converter_converts_to_webp() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("input.png");
+    DynamicImage::new_rgba8(2, 2).save(&input).unwrap();
+    let output = dir.path().join("out.webp");
+    let result = PNGConverter.convert(&input, &output, ImageFormat::WEBP);
+    assert!(result.is_ok());
+    assert!(output.exists());
+  }
+}

@@ -17,3 +17,19 @@ impl ImageConverter for SVGConverter {
     unimplemented!()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::core::traits::ImageConverter;
+
+  #[test]
+  #[should_panic(expected = "not implemented")]
+  fn svg_converter_panics() {
+    let _ = SVGConverter.convert(
+      std::path::Path::new("input.svg"),
+      std::path::Path::new("output.png"),
+      ImageFormat::PNG,
+    );
+  }
+}

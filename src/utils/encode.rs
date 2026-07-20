@@ -33,3 +33,50 @@ pub fn encode_image(
 
   Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use image::DynamicImage;
+
+  fn make_test_image() -> DynamicImage {
+    DynamicImage::new_rgba8(4, 4)
+  }
+
+  #[test]
+  fn encode_png_works() {
+    let img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.png");
+    let result = encode_image(&img, ImageFormat::PNG, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_jpg_works() {
+    let img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.jpg");
+    let result = encode_image(&img, ImageFormat::JPG, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_webp_works() {
+    let img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.webp");
+    let result = encode_image(&img, ImageFormat::WEBP, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_to_nonexistent_directory_fails() {
+    let img = make_test_image();
+    let result = encode_image(&img, ImageFormat::PNG, std::path::Path::new("/nonexistent_dir_xyz/test.png"));
+    assert!(result.is_err());
+  }
+}

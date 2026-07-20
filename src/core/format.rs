@@ -57,3 +57,150 @@ impl ImageFormat {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::path::Path;
+
+  #[test]
+  fn from_extension_png() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("image.png")).unwrap(),
+      ImageFormat::PNG
+    );
+  }
+
+  #[test]
+  fn from_extension_jpg() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("photo.jpg")).unwrap(),
+      ImageFormat::JPG
+    );
+  }
+
+  #[test]
+  fn from_extension_jpeg() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("photo.jpeg")).unwrap(),
+      ImageFormat::JPG
+    );
+  }
+
+  #[test]
+  fn from_extension_webp() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("img.webp")).unwrap(),
+      ImageFormat::WEBP
+    );
+  }
+
+  #[test]
+  fn from_extension_svg() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("icon.svg")).unwrap(),
+      ImageFormat::SVG
+    );
+  }
+
+  #[test]
+  fn from_extension_case_insensitive() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("IMAGE.PNG")).unwrap(),
+      ImageFormat::PNG
+    );
+  }
+
+  #[test]
+  fn from_extension_unsupported() {
+    let err = ImageFormat::from_extension(Path::new("file.bmp")).unwrap_err();
+    assert!(matches!(err, ImageConvertError::UnsupportedFormat(_)));
+    assert!(err.to_string().contains("bmp"));
+  }
+
+  #[test]
+  fn from_extension_no_extension() {
+    let err = ImageFormat::from_extension(Path::new("file_without_ext")).unwrap_err();
+    assert!(matches!(err, ImageConvertError::UnsupportedFormat(_)));
+    assert!(err.to_string().contains("Cannot determine file extension"));
+  }
+
+  #[test]
+  fn from_str_png() {
+    assert_eq!(ImageFormat::from_str("png").unwrap(), ImageFormat::PNG);
+  }
+
+  #[test]
+  fn from_str_jpg() {
+    assert_eq!(ImageFormat::from_str("jpg").unwrap(), ImageFormat::JPG);
+  }
+
+  #[test]
+  fn from_str_jpeg() {
+    assert_eq!(ImageFormat::from_str("jpeg").unwrap(), ImageFormat::JPG);
+  }
+
+  #[test]
+  fn from_str_webp() {
+    assert_eq!(ImageFormat::from_str("webp").unwrap(), ImageFormat::WEBP);
+  }
+
+  #[test]
+  fn from_str_svg() {
+    assert_eq!(ImageFormat::from_str("svg").unwrap(), ImageFormat::SVG);
+  }
+
+  #[test]
+  fn from_str_case_insensitive() {
+    assert_eq!(ImageFormat::from_str("PNG").unwrap(), ImageFormat::PNG);
+  }
+
+  #[test]
+  fn from_str_unsupported() {
+    let err = ImageFormat::from_str("bmp").unwrap_err();
+    assert!(matches!(err, ImageConvertError::UnsupportedFormat(_)));
+    assert!(err.to_string().contains("bmp"));
+  }
+
+  #[test]
+  fn extension_png() {
+    assert_eq!(ImageFormat::PNG.extension(), "png");
+  }
+
+  #[test]
+  fn extension_jpg() {
+    assert_eq!(ImageFormat::JPG.extension(), "jpg");
+  }
+
+  #[test]
+  fn extension_webp() {
+    assert_eq!(ImageFormat::WEBP.extension(), "webp");
+  }
+
+  #[test]
+  fn extension_svg() {
+    assert_eq!(ImageFormat::SVG.extension(), "svg");
+  }
+
+  #[test]
+  fn validate_svg_target_is_error() {
+    let result = ImageFormat::validate(ImageFormat::PNG, ImageFormat::SVG);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("SVG output is not supported"));
+  }
+
+  #[test]
+  fn validate_png_target_is_ok() {
+    assert!(ImageFormat::validate(ImageFormat::JPG, ImageFormat::PNG).is_ok());
+  }
+
+  #[test]
+  fn validate_jpg_target_is_ok() {
+    assert!(ImageFormat::validate(ImageFormat::PNG, ImageFormat::JPG).is_ok());
+  }
+
+  #[test]
+  fn validate_webp_target_is_ok() {
+    assert!(ImageFormat::validate(ImageFormat::PNG, ImageFormat::WEBP).is_ok());
+  }
+}
