@@ -6,7 +6,10 @@ edition = "2024"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 image = "0.25"
+resvg = "0.47"
 thiserror = "2"
+tiny-skia = "0.12"
+usvg = "0.47"
 
 [dev-dependencies]
 tempfile = "3"

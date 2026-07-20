@@ -44,6 +44,15 @@ mod tests {
     (path, dir)
   }
 
+  fn create_temp_svg(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    let path = dir.path().join("test.svg");
+    let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+      <rect width="64" height="64" fill="blue"/>
+    </svg>"#;
+    std::fs::write(&path, svg).unwrap();
+    path
+  }
+
   #[test]
   fn dispatch_file_not_found() {
     let result = dispatch(
@@ -112,5 +121,38 @@ mod tests {
     let result = dispatch(&input, &out);
     assert!(result.is_ok());
     assert!(out.exists());
+  }
+
+  #[test]
+  fn dispatch_success_svg_to_png() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = create_temp_svg(&dir);
+    let out = dir.path().join("out.png");
+    let result = dispatch(&input, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+    assert!(out.metadata().unwrap().len() > 0);
+  }
+
+  #[test]
+  fn dispatch_success_svg_to_jpg() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = create_temp_svg(&dir);
+    let out = dir.path().join("out.jpg");
+    let result = dispatch(&input, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+    assert!(out.metadata().unwrap().len() > 0);
+  }
+
+  #[test]
+  fn dispatch_success_svg_to_webp() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = create_temp_svg(&dir);
+    let out = dir.path().join("out.webp");
+    let result = dispatch(&input, &out);
+    assert!(result.is_ok());
+    assert!(out.exists());
+    assert!(out.metadata().unwrap().len() > 0);
   }
 }

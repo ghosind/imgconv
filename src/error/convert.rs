@@ -15,6 +15,9 @@ pub enum ImageConvertError {
   #[error("Processing error: {0}")]
   ProcessingError(String),
 
+  #[error("SVG render error: {0}")]
+  SVGRenderError(String),
+
   /// Unsupported image format error
   #[error("Unsupported image format: {0}")]
   UnsupportedFormat(String),
@@ -58,6 +61,13 @@ mod tests {
     let err = ImageConvertError::ProcessingError("something went wrong".into());
     assert!(err.to_string().contains("something went wrong"));
     assert!(err.to_string().contains("Processing error"));
+  }
+
+  #[test]
+  fn svg_render_error_display() {
+    let err = ImageConvertError::SVGRenderError("render failed".into());
+    assert!(err.to_string().contains("render failed"));
+    assert!(err.to_string().contains("SVG render error"));
   }
 
   #[test]
