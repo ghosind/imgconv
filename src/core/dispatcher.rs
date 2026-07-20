@@ -2,7 +2,6 @@ use std::path::Path;
 
 use crate::core::convert;
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageConverter;
 use crate::error::convert::ImageConvertError;
 
 pub fn dispatch(

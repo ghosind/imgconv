@@ -1,6 +1,5 @@
 use crate::core::format::ImageFormat;
 use crate::core::traits::ImageConverter;
-use crate::error::convert::ImageConvertError;
 use crate::converter::raster::{JPGConverter, PNGConverter, WEBPConverter};
 use crate::converter::vector::SVGConverter;
 

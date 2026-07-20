@@ -1,7 +1,3 @@
-use std::path::Path;
-
-use image::DynamicImage;
-
 use crate::core::format::ImageFormat;
 use crate::error::convert::ImageConvertError;
 

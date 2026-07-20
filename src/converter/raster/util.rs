@@ -9,7 +9,7 @@ pub(crate) fn convert(
   output_path: &Path,
   target_format: ImageFormat,
 ) -> Result<(), ImageConvertError> {
-  let mut img = image::open(input_path)?;
+  let img = image::open(input_path)?;
 
   encode_image(&img, target_format, output_path)
 }

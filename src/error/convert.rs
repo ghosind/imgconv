@@ -1,4 +1,3 @@
-use std::error::{Error as StdError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]

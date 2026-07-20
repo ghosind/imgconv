@@ -3,7 +3,6 @@ use std::path::Path;
 
 use usvg::{Tree, Options};
 use resvg::{render};
-use image::RgbaImage;
 use tiny_skia::{Pixmap, Transform};
 
 use crate::core::format::ImageFormat;
@@ -44,13 +43,13 @@ impl ImageConverter for SVGConverter {
     let mut pixmap = Pixmap::new(width, height).ok_or_else(|| {
       ImageConvertError::SVGRenderError("Failed to create render canvas".into())
     })?;
-    resvg::render(&tree, Transform::default(), &mut pixmap.as_mut());
+    render(&tree, Transform::default(), &mut pixmap.as_mut());
 
     let png_bytes = pixmap.encode_png().map_err(|e| {
       ImageConvertError::SVGRenderError(format!("Render result PNG encoding failed: {}", e))
     })?;
 
-    let mut img = image::load_from_memory(&png_bytes).map_err(|e| {
+    let img = image::load_from_memory(&png_bytes).map_err(|e| {
       ImageConvertError::SVGRenderError(format!("Failed to load rendered PNG: {}", e))
     })?;
 
