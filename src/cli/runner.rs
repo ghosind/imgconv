@@ -4,6 +4,7 @@ use clap::Parser;
 
 use crate::cli::args::{Cli, Commands};
 use crate::cli::convert::ConvertArgs;
+use crate::core::format::ImageFormat;
 use crate::core::dispatcher;
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,10 +18,16 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Error>> {
   let input_path = std::path::Path::new(&args.input);
   let output_path = determine_output_path(args)?;
+  let output_format =if args.format.is_some() {
+    ImageFormat::from_str(&args.format.as_ref().unwrap())?
+  } else {
+    ImageFormat::from_extension(&output_path)?
+  };
 
   dispatcher::dispatch(
     input_path,
     &output_path,
+    output_format,
   )?;
 
   Ok(())
@@ -29,6 +36,11 @@ fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Erro
 fn determine_output_path(args: &ConvertArgs) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
   if let Some(output) = &args.output {
     Ok(PathBuf::from(output))
+  } else if let Some(fmt) = &args.format {
+    let input_path = std::path::Path::new(&args.input);
+    let mut new_path = input_path.to_path_buf();
+    new_path.set_extension(fmt);
+    Ok(new_path)
   } else {
     let input_path = std::path::Path::new(&args.input);
     let mut new_path = input_path.to_path_buf();
@@ -46,7 +58,7 @@ mod tests {
     let args = ConvertArgs {
       input: "input.jpg".into(),
       output: Some("custom.png".into()),
-      format: "png".into(),
+      format: Some("png".into()),
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("custom.png"));
@@ -57,7 +69,7 @@ mod tests {
     let args = ConvertArgs {
       input: "photo.jpg".into(),
       output: None,
-      format: "png".into(),
+      format: Some("png".into()),
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("photo.png"));
@@ -68,7 +80,7 @@ mod tests {
     let args = ConvertArgs {
       input: "file_without_ext".into(),
       output: None,
-      format: "png".into(),
+      format: Some("png".into()),
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("file_without_ext.png"));
@@ -79,10 +91,21 @@ mod tests {
     let args = ConvertArgs {
       input: "input.svg".into(),
       output: Some("output.jpg".into()),
-      format: "png".into(),
+      format: Some("png".into()),
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("output.jpg"));
+  }
+
+  #[test]
+  fn determine_output_with_defaults() {
+    let args = ConvertArgs {
+      input: "image.jpg".into(),
+      output: None,
+      format: None,
+    };
+    let result = determine_output_path(&args).unwrap();
+    assert_eq!(result, PathBuf::from("image.png"));
   }
 
   #[test]
@@ -96,7 +119,7 @@ mod tests {
     let args = ConvertArgs {
       input: input.to_str().unwrap().to_string(),
       output: Some(output.to_str().unwrap().to_string()),
-      format: "jpg".to_string(),
+      format: Some("jpg".to_string()),
     };
 
     let cli = Cli {
@@ -110,6 +133,7 @@ mod tests {
         let result = crate::core::dispatcher::dispatch(
           std::path::Path::new(&args.input),
           &out_path,
+          ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap()
         );
         assert!(result.is_ok());
         assert!(out_path.exists());

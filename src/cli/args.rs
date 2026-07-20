@@ -32,7 +32,7 @@ mod tests {
     match &cli.command {
       Commands::Convert(args) => {
         assert_eq!(args.input, "input.png");
-        assert_eq!(args.format, "png"); // default
+        assert!(args.format.is_none());
         assert!(args.output.is_none());
       }
     }
@@ -58,7 +58,7 @@ mod tests {
     ]).unwrap();
     match &cli.command {
       Commands::Convert(args) => {
-        assert_eq!(args.format, "jpg");
+        assert_eq!(args.format.as_deref(), Some("jpg"));
       }
     }
   }
@@ -74,7 +74,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.input, "input.webp");
         assert_eq!(args.output.as_deref(), Some("result.jpg"));
-        assert_eq!(args.format, "jpg");
+        assert_eq!(args.format.as_deref(), Some("jpg"));
       }
     }
   }

@@ -8,6 +8,7 @@ use crate::error::convert::ImageConvertError;
 pub fn dispatch(
   input_path: &Path,
   output_path: &Path,
+  output_format: ImageFormat,
 ) -> Result<(), ImageConvertError> {
   if !input_path.exists() {
     return Err(ImageConvertError::FileNotFound(
@@ -16,7 +17,6 @@ pub fn dispatch(
   }
 
   let input_format = ImageFormat::from_extension(input_path)?;
-  let output_format = ImageFormat::from_extension(output_path)?;
 
   ImageFormat::validate(input_format, output_format)?;
 
@@ -58,6 +58,7 @@ mod tests {
     let result = dispatch(
       Path::new("/nonexistent/path/file.png"),
       Path::new("/tmp/output.png"),
+      ImageFormat::PNG,
     );
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::FileNotFound(_)));
@@ -70,7 +71,7 @@ mod tests {
     let bad_input = _dir.path().join("test.xyz");
     std::fs::rename(&input, &bad_input).unwrap();
     let out = _dir.path().join("out.png");
-    let result = dispatch(&bad_input, &out);
+    let result = dispatch(&bad_input, &out, ImageFormat::PNG);
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::UnsupportedFormat(_)));
   }
@@ -79,7 +80,7 @@ mod tests {
   fn dispatch_svg_output_rejected() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.svg");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::SVG);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("SVG output is not supported"));
@@ -91,7 +92,7 @@ mod tests {
     let out = _dir.path().join("out.png");
     // Create output file in advance
     std::fs::write(&out, b"dummy").unwrap();
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::PNG);
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::FileExists(_)));
   }
@@ -100,7 +101,7 @@ mod tests {
   fn dispatch_success_png_to_jpg() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.jpg");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::JPG);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -109,7 +110,7 @@ mod tests {
   fn dispatch_success_png_to_webp() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.webp");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::WEBP);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -118,7 +119,7 @@ mod tests {
   fn dispatch_success_png_to_png() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.png");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::PNG);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -128,7 +129,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.png");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::PNG);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
@@ -139,7 +140,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.jpg");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::JPG);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
@@ -150,7 +151,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.webp");
-    let result = dispatch(&input, &out);
+    let result = dispatch(&input, &out, ImageFormat::WEBP);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);

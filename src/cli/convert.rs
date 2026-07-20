@@ -12,6 +12,6 @@ pub struct ConvertArgs {
 
   /// Target output format, default png
   /// (-f/--format)
-  #[arg(short = 'f', long, default_value = "png")]
-  pub format: String,
+  #[arg(short = 'f', long)]
+  pub format: Option<String>,
 }
