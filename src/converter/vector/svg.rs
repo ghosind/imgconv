@@ -10,6 +10,9 @@ use crate::core::traits::ImageConverter;
 use crate::error::convert::ImageConvertError;
 use crate::utils::encode::encode_image;
 
+/// Converter for SVG (Scalable Vector Graphics) input images.
+///
+/// Renders the SVG to a raster bitmap, then encodes the result to the requested output format.
 pub struct SVGConverter;
 
 impl ImageConverter for SVGConverter {

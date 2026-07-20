@@ -1,23 +1,32 @@
 use thiserror::Error;
 
+/// Errors that can occur during image conversion.
+///
+/// This enum covers file I/O problems, unsupported formats, rendering failures,
+/// and other processing errors. It implements [`std::error::Error`] via `thiserror`.
 #[derive(Error, Debug)]
 pub enum ImageConvertError {
+  /// The output file already exists (safety guard to prevent accidental overwrites).
   #[error("file exists: {0}")]
   FileExists(String),
 
+  /// The input file could not be found.
   #[error("File not found: {0}")]
   FileNotFound(String),
 
+  /// An I/O error occurred (e.g., permission denied, disk full).
   #[error("IO error: {0}")]
   IO(#[from] std::io::Error),
 
+  /// A generic processing error during image decoding or encoding.
   #[error("Processing error: {0}")]
   ProcessingError(String),
 
+  /// An error specific to SVG parsing or rendering.
   #[error("SVG render error: {0}")]
   SVGRenderError(String),
 
-  /// Unsupported image format error
+  /// The image format is not supported (either input or output).
   #[error("Unsupported image format: {0}")]
   UnsupportedFormat(String),
 }

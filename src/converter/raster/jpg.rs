@@ -5,6 +5,9 @@ use crate::core::traits::ImageConverter;
 use crate::error::convert::ImageConvertError;
 use crate::converter::raster::util::convert;
 
+/// Converter for JPEG input images.
+///
+/// Implements [`ImageConverter`] by delegating to the shared raster utility.
 pub struct JPGConverter;
 
 impl ImageConverter for JPGConverter {

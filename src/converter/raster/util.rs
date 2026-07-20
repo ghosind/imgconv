@@ -4,6 +4,10 @@ use crate::core::format::ImageFormat;
 use crate::error::convert::ImageConvertError;
 use crate::utils::encode::encode_image;
 
+/// Opens a raster image from disk and encodes it to the target format.
+///
+/// This is a shared helper used by the raster converters (PNG, JPG, WEBP) to avoid duplicating
+/// the same logic.
 pub(crate) fn convert(
   input_path: &Path,
   output_path: &Path,

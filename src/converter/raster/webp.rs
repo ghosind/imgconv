@@ -5,6 +5,9 @@ use crate::core::traits::ImageConverter;
 use crate::error::convert::ImageConvertError;
 use crate::converter::raster::util::convert;
 
+/// Converter for WEBP input images.
+///
+/// Implements [`ImageConverter`] by delegating to the shared raster utility.
 pub struct WEBPConverter;
 
 impl ImageConverter for WEBPConverter {

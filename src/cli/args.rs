@@ -2,20 +2,25 @@ use clap::{Parser, Subcommand};
 
 use crate::cli::convert::ConvertArgs;
 
+/// CLI argument structure for the application.
+///
+/// Provides global flags (e.g., `--quiet`) and dispatches to subcommands.
 #[derive(Parser, Debug)]
 #[command(name = "imgconv", version)]
 pub struct Cli {
-  /// Quiet/silent output mode (-Q/--quiet)
+  /// Quiet/silent output mode (-Q/--quiet).
   #[arg(short = 'Q', long, global = true)]
   pub quiet: bool,
 
+  /// The subcommand to execute.
   #[command(subcommand)]
   pub command: Commands,
 }
 
+/// Available subcommands for the application.
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-  /// Image format conversion
+  /// Convert an image from one format to another with the specified options.
   Convert(ConvertArgs),
 }
 

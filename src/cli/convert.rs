@@ -6,22 +6,29 @@ use crate::cli::args::{Cli};
 use crate::core::format::ImageFormat;
 use crate::core::dispatcher;
 
-/// convert subcommand arguments
+/// Arguments for the `convert` subcommand.
+///
+/// Specifies the input file, an optional output path, and the other conversion parameters.
 #[derive(Args, Debug)]
 pub struct ConvertArgs {
-  /// Input file
+  /// Path to the input image file.
   pub input: String,
 
-  /// Output file (-o/--output)
+  /// Path to the output image file (`-o` / `--output`).
+  /// If omitted, the output path is derived from the input file name and target format.
   #[arg(short = 'o', long)]
   pub output: Option<String>,
 
-  /// Target output format, default png
-  /// (-f/--format)
+  /// Target output format (`-f` / `--format`). Supported values: `png`, `jpg`, `jpeg`, `webp`.
+  /// If omitted, the format is inferred from the output file extension. Defaults to `png`.
   #[arg(short = 'f', long)]
   pub format: Option<String>,
 }
 
+/// Executes the image conversion workflow for the `convert` subcommand.
+///
+/// Determines the output path and target format, then delegates the actual
+/// conversion to the core dispatcher.
 pub fn convert(_: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Error>> {
   let input_path = std::path::Path::new(&args.input);
   let output_path = determine_output_path(args)?;
@@ -40,6 +47,12 @@ pub fn convert(_: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Er
   Ok(())
 }
 
+/// Resolves the output file path from the conversion arguments.
+///
+/// Priority:
+/// 1. Explicit `--output` path if provided.
+/// 2. Input path with extension replaced by the specified `--format`.
+/// 3. Input path with extension replaced by `png` (default).
 fn determine_output_path(args: &ConvertArgs) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
   if let Some(output) = &args.output {
     Ok(PathBuf::from(output))

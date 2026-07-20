@@ -4,6 +4,14 @@ use crate::core::convert;
 use crate::core::format::ImageFormat;
 use crate::error::convert::ImageConvertError;
 
+/// Validates inputs and orchestrates the full conversion workflow.
+///
+/// Steps performed:
+/// 1. Checks that the input file exists.
+/// 2. Determines the input format from the file extension.
+/// 3. Validates the input-to-output format compatibility.
+/// 4. Ensures the output file does not already exist (safety guard).
+/// 5. Looks up the appropriate converter and runs the conversion.
 pub fn dispatch(
   input_path: &Path,
   output_path: &Path,

@@ -2,15 +2,26 @@ use std::path::Path;
 
 use crate::error::convert::ImageConvertError;
 
+/// Supported image formats for input and output.
+///
+/// Each variant represents a distinct image file format that the application
+/// can read and/or write.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImageFormat {
+  /// Portable Network Graphics format.
   PNG,
+  /// JPEG format (supports both `.jpg` and `.jpeg` extensions).
   JPG,
+  /// WebP format.
   WEBP,
+  /// Scalable Vector Graphics format (input-only; SVG output is not supported).
   SVG,
 }
 
 impl ImageFormat {
+  /// Infers the image format from a file's extension.
+  ///
+  /// Returns `UnsupportedFormat` if the extension is missing or unrecognized.
   pub fn from_extension(path: &Path) -> Result<Self, ImageConvertError> {
     match path.extension().and_then(|e| e.to_str()) {
       Some(ext) => match ext.to_lowercase().as_str() {
@@ -26,6 +37,9 @@ impl ImageFormat {
     }
   }
 
+  /// Parses an image format from a string (e.g., `"png"`, `"jpg"`, `"webp"`, `"svg"`).
+  ///
+  /// Case-insensitive. Returns `UnsupportedFormat` if the string does not match.
   pub fn from_str(s: &str) -> Result<Self, ImageConvertError> {
     match s.to_lowercase().as_str() {
       "png" => Ok(ImageFormat::PNG),
@@ -36,6 +50,7 @@ impl ImageFormat {
     }
   }
 
+  /// Returns the standard file extension for this format (e.g., `"png"`, `"jpg"`, `"webp"`, `"svg"`).
   pub fn extension(&self) -> &str {
     match self {
       ImageFormat::PNG => "png",
@@ -45,6 +60,9 @@ impl ImageFormat {
     }
   }
 
+  /// Validates that the combination of input and target formats is supported.
+  ///
+  /// Currently, SVG output is rejected since the application cannot encode to SVG.
   pub fn validate(
     _input_format: ImageFormat,
     target_format: ImageFormat,

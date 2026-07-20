@@ -5,6 +5,10 @@ use image::DynamicImage;
 use crate::core::format::ImageFormat;
 use crate::error::convert::ImageConvertError;
 
+/// Encodes a [`DynamicImage`] to the specified format and writes it to disk.
+///
+/// Supported output formats: PNG, JPG, WEBP.
+/// SVG output is rejected with an [`ImageConvertError::UnsupportedFormat`].
 pub fn encode_image(
   img: &DynamicImage,
   format: ImageFormat,
