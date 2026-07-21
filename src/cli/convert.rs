@@ -5,6 +5,7 @@ use clap::{Args};
 use crate::cli::args::{Cli};
 use crate::core::format::ImageFormat;
 use crate::core::dispatcher;
+use crate::utils::output::Output;
 
 /// Arguments for the `convert` subcommand.
 ///
@@ -29,20 +30,34 @@ pub struct ConvertArgs {
 ///
 /// Determines the output path and target format, then delegates the actual
 /// conversion to the core dispatcher.
-pub fn convert(_: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Error>> {
+  let out = Output::new(cli.quiet);
+
   let input_path = std::path::Path::new(&args.input);
   let output_path = determine_output_path(args)?;
+
+  let input_format = ImageFormat::from_extension(input_path)?;
   let output_format = if args.format.is_some() {
     ImageFormat::from_str(&args.format.as_ref().unwrap())?
   } else {
     ImageFormat::from_extension(&output_path)?
   };
 
+  out.info(&format!(
+    "Converting {} → {}  [{} → {}]",
+    args.input,
+    output_path.display(),
+    input_format.extension(),
+    output_format.extension()
+  ));
+
   dispatcher::dispatch(
     input_path,
     &output_path,
     output_format,
   )?;
+
+  out.success(&format!("Converted: {} → {}", args.input, output_path.display()));
 
   Ok(())
 }
