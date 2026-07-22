@@ -51,6 +51,7 @@ jobs:
             vcpkg install dav1d
           }
           $vcpkgInstalled = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows"
+          echo "$vcpkgInstalled\bin" >> $env:GITHUB_PATH
           echo "PKG_CONFIG_PATH=$vcpkgInstalled\lib\pkgconfig" >> $env:GITHUB_ENV
           echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
 
