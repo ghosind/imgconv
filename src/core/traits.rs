@@ -1,3 +1,5 @@
+use image::DynamicImage;
+
 use crate::core::format::ImageFormat;
 use crate::error::convert::ImageConvertError;
 
@@ -21,5 +23,10 @@ pub trait ImageConverter {
     input_path: &std::path::Path,
     output_path: &std::path::Path,
     target_format: ImageFormat,
+    processors: Vec<Box<dyn ImageProcessor>>,
   ) -> Result<(), ImageConvertError>;
+}
+
+pub trait ImageProcessor: std::fmt::Debug {
+  fn process(&self, img: &mut DynamicImage) -> Result<(), ImageConvertError>;
 }

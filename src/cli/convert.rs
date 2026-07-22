@@ -5,13 +5,19 @@ use clap::{Args};
 use crate::cli::args::{Cli};
 use crate::core::format::ImageFormat;
 use crate::core::dispatcher;
+use crate::core::traits::ImageProcessor;
+use crate::processor::resize::ResizeProcessor;
 use crate::utils::output::Output;
 
 /// Arguments for the `convert` subcommand.
 ///
 /// Specifies the input file, an optional output path, and the other conversion parameters.
 #[derive(Args, Debug)]
+#[command(disable_help_flag = true)]
 pub struct ConvertArgs {
+  /// Show help for the convert subcommand.
+  #[arg(long, action = clap::ArgAction::Help)]
+  pub help: Option<bool>,
   /// Path to the input image file.
   pub input: String,
 
@@ -24,6 +30,16 @@ pub struct ConvertArgs {
   /// If omitted, the format is inferred from the output file extension. Defaults to `png`.
   #[arg(short = 'f', long)]
   pub format: Option<String>,
+
+  /// Target width in pixels (`-w` / `--width`).
+  /// When only one dimension is specified, the other is auto-calculated to preserve aspect ratio.
+  #[arg(short = 'w', long)]
+  pub width: Option<u32>,
+
+  /// Target height in pixels (`-h` / `--height`).
+  /// When only one dimension is specified, the other is auto-calculated to preserve aspect ratio.
+  #[arg(short = 'h', long)]
+  pub height: Option<u32>,
 }
 
 /// Executes the image conversion workflow for the `convert` subcommand.
@@ -32,6 +48,8 @@ pub struct ConvertArgs {
 /// conversion to the core dispatcher.
 pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::Error>> {
   let out = Output::new(cli.quiet);
+
+  let processors = build_processors(args);
 
   let input_path = std::path::Path::new(&args.input);
   let output_path = determine_output_path(args)?;
@@ -56,11 +74,26 @@ pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::
     &output_path,
     output_format,
     cli.overwrite,
+    processors,
   )?;
 
   out.success(&format!("Converted: {} → {}", args.input, output_path.display()));
 
   Ok(())
+}
+
+/// Builds a list of image processors based on the provided conversion arguments.
+fn build_processors(args: &ConvertArgs) -> Vec<Box<dyn ImageProcessor>> {
+  let mut processors: Vec<Box<dyn ImageProcessor>> = Vec::new();
+
+  if args.width.is_some() || args.height.is_some() {
+    processors.push(Box::new(ResizeProcessor::new(
+      args.width,
+      args.height,
+    )));
+  }
+
+  processors
 }
 
 /// Resolves the output file path from the conversion arguments.
@@ -97,6 +130,9 @@ mod tests {
       input: "input.jpg".into(),
       output: Some("custom.png".into()),
       format: Some("png".into()),
+      width: None,
+      height: None,
+      help: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("custom.png"));
@@ -108,6 +144,9 @@ mod tests {
       input: "photo.jpg".into(),
       output: None,
       format: Some("png".into()),
+      width: None,
+      height: None,
+      help: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("photo.png"));
@@ -119,6 +158,9 @@ mod tests {
       input: "file_without_ext".into(),
       output: None,
       format: Some("png".into()),
+      width: None,
+      height: None,
+      help: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("file_without_ext.png"));
@@ -130,6 +172,9 @@ mod tests {
       input: "input.svg".into(),
       output: Some("output.jpg".into()),
       format: Some("png".into()),
+      width: None,
+      height: None,
+      help: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("output.jpg"));
@@ -141,6 +186,9 @@ mod tests {
       input: "image.jpg".into(),
       output: None,
       format: None,
+      width: None,
+      height: None,
+      help: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("image.png"));
@@ -158,9 +206,13 @@ mod tests {
       input: input.to_str().unwrap().to_string(),
       output: Some(output.to_str().unwrap().to_string()),
       format: Some("jpg".to_string()),
+      width: None,
+      height: None,
+      help: None,
     };
 
     let cli = Cli {
+      help: None,
       quiet: false,
       overwrite: false,
       command: Commands::Convert(args),
@@ -174,6 +226,7 @@ mod tests {
           &out_path,
           ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap(),
           false,
+          vec![],
         );
         assert!(result.is_ok());
         assert!(out_path.exists());

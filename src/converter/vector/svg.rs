@@ -6,7 +6,7 @@ use resvg::{render};
 use tiny_skia::{Pixmap, Transform};
 
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageConverter;
+use crate::core::traits::{ImageConverter, ImageProcessor};
 use crate::error::convert::ImageConvertError;
 use crate::utils::encode::encode_image;
 
@@ -21,6 +21,7 @@ impl ImageConverter for SVGConverter {
     input_path: &Path,
     output_path: &Path,
     target_format: ImageFormat,
+    processors: Vec<Box<dyn ImageProcessor>>,
   ) -> Result<(), ImageConvertError> {
     let svg_data = fs::read_to_string(input_path).map_err(|e| {
       ImageConvertError::SVGRenderError(format!("Failed to read SVG file: {}", e))
@@ -52,11 +53,11 @@ impl ImageConverter for SVGConverter {
       ImageConvertError::SVGRenderError(format!("Render result PNG encoding failed: {}", e))
     })?;
 
-    let img = image::load_from_memory(&png_bytes).map_err(|e| {
+    let mut img = image::load_from_memory(&png_bytes).map_err(|e| {
       ImageConvertError::SVGRenderError(format!("Failed to load rendered PNG: {}", e))
     })?;
 
-    encode_image(&img, target_format, output_path)
+    encode_image(&mut img, target_format, output_path, processors)
   }
 }
 
@@ -77,7 +78,7 @@ mod tests {
 
     std::fs::write(&input, MINIMAL_SVG).unwrap();
 
-    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG);
+    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
     assert!(output.metadata().unwrap().len() > 0);
@@ -91,7 +92,7 @@ mod tests {
 
     std::fs::write(&input, MINIMAL_SVG).unwrap();
 
-    let result = SVGConverter.convert(&input, &output, ImageFormat::JPG);
+    let result = SVGConverter.convert(&input, &output, ImageFormat::JPG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
     assert!(output.metadata().unwrap().len() > 0);
@@ -105,7 +106,7 @@ mod tests {
 
     std::fs::write(&input, MINIMAL_SVG).unwrap();
 
-    let result = SVGConverter.convert(&input, &output, ImageFormat::WEBP);
+    let result = SVGConverter.convert(&input, &output, ImageFormat::WEBP, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
     assert!(output.metadata().unwrap().len() > 0);
@@ -119,7 +120,7 @@ mod tests {
 
     std::fs::write(&input, "this is not valid svg").unwrap();
 
-    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG);
+    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(
@@ -134,7 +135,7 @@ mod tests {
     let input = dir.path().join("nonexistent.svg");
     let output = dir.path().join("output.png");
 
-    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG);
+    let result = SVGConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("SVG render error"));
   }

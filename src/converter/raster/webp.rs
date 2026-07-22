@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageConverter;
+use crate::core::traits::{ImageConverter, ImageProcessor};
 use crate::error::convert::ImageConvertError;
 use crate::converter::raster::util::convert;
 
@@ -16,8 +16,9 @@ impl ImageConverter for WEBPConverter {
     input_path: &Path,
     output_path: &Path,
     target_format: ImageFormat,
+    processors: Vec<Box<dyn ImageProcessor>>,
   ) -> Result<(), ImageConvertError> {
-    convert(input_path, output_path, target_format)
+    convert(input_path, output_path, target_format, processors)
   }
 }
 
@@ -39,7 +40,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_webp(&dir);
     let output = dir.path().join("out.png");
-    let result = WEBPConverter.convert(&input, &output, ImageFormat::PNG);
+    let result = WEBPConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -49,7 +50,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_webp(&dir);
     let output = dir.path().join("out.jpg");
-    let result = WEBPConverter.convert(&input, &output, ImageFormat::JPG);
+    let result = WEBPConverter.convert(&input, &output, ImageFormat::JPG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }

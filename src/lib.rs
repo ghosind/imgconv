@@ -6,5 +6,7 @@ pub mod converter;
 pub mod core;
 /// Custom error types for image conversion operations.
 pub mod error;
+/// Image processing utilities: resizing, filtering, and other transformations.
+pub mod processor;
 /// Utility functions: image encoding helpers and unified output controller.
 pub mod utils;

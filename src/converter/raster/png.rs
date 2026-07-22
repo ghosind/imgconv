@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageConverter;
+use crate::core::traits::{ImageConverter, ImageProcessor};
 use crate::error::convert::ImageConvertError;
 use crate::converter::raster::util::convert;
 
@@ -16,8 +16,9 @@ impl ImageConverter for PNGConverter {
     input_path: &Path,
     output_path: &Path,
     target_format: ImageFormat,
+    processors: Vec<Box<dyn ImageProcessor>>,
   ) -> Result<(), ImageConvertError> {
-    convert(input_path, output_path, target_format)
+    convert(input_path, output_path, target_format, processors)
   }
 }
 
@@ -33,7 +34,7 @@ mod tests {
     let input = dir.path().join("input.png");
     DynamicImage::new_rgba8(2, 2).save(&input).unwrap();
     let output = dir.path().join("out.jpg");
-    let result = PNGConverter.convert(&input, &output, ImageFormat::JPG);
+    let result = PNGConverter.convert(&input, &output, ImageFormat::JPG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -44,7 +45,7 @@ mod tests {
     let input = dir.path().join("input.png");
     DynamicImage::new_rgba8(2, 2).save(&input).unwrap();
     let output = dir.path().join("out.webp");
-    let result = PNGConverter.convert(&input, &output, ImageFormat::WEBP);
+    let result = PNGConverter.convert(&input, &output, ImageFormat::WEBP, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }

@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 
 use crate::cli::convert::ConvertArgs;
 
@@ -6,8 +6,12 @@ use crate::cli::convert::ConvertArgs;
 ///
 /// Provides global flags (e.g., `--quiet`) and dispatches to subcommands.
 #[derive(Parser, Debug)]
-#[command(name = "imgconv", version)]
+#[command(name = "imgconv", version, disable_help_flag = true)]
 pub struct Cli {
+  /// Show help information for the application.
+  #[arg(long, action = ArgAction::Help)]
+  pub help: Option<bool>,
+
   /// Quiet/silent output mode (-Q/--quiet).
   #[arg(short = 'Q', long, global = true)]
   pub quiet: bool,

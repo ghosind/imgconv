@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use crate::core::format::ImageFormat;
+use crate::core::traits::ImageProcessor;
 use crate::error::convert::ImageConvertError;
 use crate::utils::encode::encode_image;
 
@@ -12,10 +13,11 @@ pub(crate) fn convert(
   input_path: &Path,
   output_path: &Path,
   target_format: ImageFormat,
+  processors: Vec<Box<dyn ImageProcessor>>,
 ) -> Result<(), ImageConvertError> {
-  let img = image::open(input_path)?;
+  let mut img = image::open(input_path)?;
 
-  encode_image(&img, target_format, output_path)
+  encode_image(&mut img, target_format, output_path, processors)
 }
 
 #[cfg(test)]
@@ -35,7 +37,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.jpg");
-    let result = convert(&input, &output, ImageFormat::JPG);
+    let result = convert(&input, &output, ImageFormat::JPG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -45,7 +47,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.webp");
-    let result = convert(&input, &output, ImageFormat::WEBP);
+    let result = convert(&input, &output, ImageFormat::WEBP, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -55,7 +57,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.png");
-    let result = convert(&input, &output, ImageFormat::PNG);
+    let result = convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -65,7 +67,7 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("missing.png");
     let output = dir.path().join("out.png");
-    let result = convert(&input, &output, ImageFormat::PNG);
+    let result = convert(&input, &output, ImageFormat::PNG, vec![]);
     assert!(result.is_err());
   }
 }

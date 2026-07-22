@@ -342,3 +342,140 @@ fn cli_help_mentions_overwrite() {
   assert!(stdout.contains("--overwrite") || stdout.contains("-O"));
   assert!(stdout.contains("Overwrite"));
 }
+
+#[test]
+fn cli_convert_with_width_resize() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-w")
+    .arg("32")
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+
+  // Verify the output image was actually resized to width 32
+  let img = image::open(&output).unwrap();
+  assert_eq!(img.width(), 32);
+}
+
+#[test]
+fn cli_convert_with_height_resize() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-h")
+    .arg("32")
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+
+  let img = image::open(&output).unwrap();
+  assert_eq!(img.height(), 32);
+}
+
+#[test]
+fn cli_convert_resize_with_both_dimensions() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-w")
+    .arg("64")
+    .arg("-h")
+    .arg("64")
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+
+  let img = image::open(&output).unwrap();
+  assert_eq!(img.width(), 64);
+  assert_eq!(img.height(), 64);
+}
+
+#[test]
+fn cli_convert_resize_zero_width_rejected() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-w")
+    .arg("0")
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(
+    stderr.contains("greater than 0") || stderr.contains("Error"),
+    "Expected zero-dimension rejection, got: {}",
+    stderr
+  );
+}
+
+#[test]
+fn cli_convert_resize_zero_height_rejected() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-h")
+    .arg("0")
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(
+    stderr.contains("greater than 0") || stderr.contains("Error"),
+    "Expected zero-dimension rejection, got: {}",
+    stderr
+  );
+}
+
+#[test]
+fn cli_help_shows_width_height_options() {
+  let output = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg("--help")
+    .output()
+    .unwrap();
+
+  assert!(output.status.success());
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  assert!(stdout.contains("--width") || stdout.contains("-w"));
+  assert!(stdout.contains("--height") || stdout.contains("-h"));
+}
