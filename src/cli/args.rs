@@ -12,6 +12,10 @@ pub struct Cli {
   #[arg(short = 'Q', long, global = true)]
   pub quiet: bool,
 
+  /// Overwrite existing files without prompting (-O/--overwrite).
+  #[arg(short = 'O', long, global = true)]
+  pub overwrite: bool,
+
   /// The subcommand to execute.
   #[command(subcommand)]
   pub command: Commands,
@@ -112,5 +116,44 @@ mod tests {
     let debug_str = format!("{:?}", cli);
     assert!(debug_str.contains("Cli"));
     assert!(debug_str.contains("Convert"));
+  }
+
+  #[test]
+  fn parse_overwrite_short_flag() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "-O", "convert", "input.png",
+    ]).unwrap();
+    assert!(cli.overwrite);
+  }
+
+  #[test]
+  fn parse_overwrite_long_flag() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "--overwrite", "convert", "input.png",
+    ]).unwrap();
+    assert!(cli.overwrite);
+  }
+
+  #[test]
+  fn parse_overwrite_defaults_to_false() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png",
+    ]).unwrap();
+    assert!(!cli.overwrite);
+  }
+
+  #[test]
+  fn parse_combined_flags() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "-Q", "-O", "convert", "input.png", "-f", "jpg",
+    ]).unwrap();
+    assert!(cli.quiet);
+    assert!(cli.overwrite);
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.input, "input.png");
+        assert_eq!(args.format.as_deref(), Some("jpg"));
+      }
+    }
   }
 }

@@ -48,13 +48,14 @@ pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::
     args.input,
     output_path.display(),
     input_format.extension(),
-    output_format.extension()
+    output_format.extension(),
   ));
 
   dispatcher::dispatch(
     input_path,
     &output_path,
     output_format,
+    cli.overwrite,
   )?;
 
   out.success(&format!("Converted: {} → {}", args.input, output_path.display()));
@@ -161,6 +162,7 @@ mod tests {
 
     let cli = Cli {
       quiet: false,
+      overwrite: false,
       command: Commands::Convert(args),
     };
 
@@ -170,7 +172,8 @@ mod tests {
         let result = crate::core::dispatcher::dispatch(
           std::path::Path::new(&args.input),
           &out_path,
-          ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap()
+          ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap(),
+          false,
         );
         assert!(result.is_ok());
         assert!(out_path.exists());

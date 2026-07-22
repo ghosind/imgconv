@@ -244,3 +244,101 @@ fn cli_auto_output_name() {
   assert!(status.success());
   assert!(output.exists());
 }
+
+#[test]
+fn cli_overwrite_existing_file() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  // Create a pre-existing output file
+  std::fs::write(&output, b"dummy").unwrap();
+  assert!(output.exists());
+
+  // Without -O, should fail
+  let result_without_ow = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .output()
+    .unwrap();
+  assert!(!result_without_ow.status.success());
+
+  // With -O, should succeed
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("-O")
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  // Content should be the converted image, not the dummy bytes
+  assert!(output.metadata().unwrap().len() > 10);
+}
+
+#[test]
+fn cli_overwrite_long_flag() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.png");
+
+  // Create a pre-existing output file
+  std::fs::write(&output, b"dummy").unwrap();
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("--overwrite")
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 10);
+}
+
+#[test]
+fn cli_same_file_rejected() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "same.png");
+  // Same input and output path
+  let output = input.clone();
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("-O")
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(
+    stderr.contains("Input and output paths are the same")
+      || stderr.contains("Error"),
+    "Expected same-file rejection, got: {}",
+    stderr
+  );
+}
+
+#[test]
+fn cli_help_mentions_overwrite() {
+  let output = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("--help")
+    .output()
+    .unwrap();
+
+  assert!(output.status.success());
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  assert!(stdout.contains("--overwrite") || stdout.contains("-O"));
+  assert!(stdout.contains("Overwrite"));
+}
