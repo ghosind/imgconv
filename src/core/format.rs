@@ -8,12 +8,23 @@ use crate::error::convert::ImageConvertError;
 /// can read and/or write.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImageFormat {
-  /// Portable Network Graphics format.
-  PNG,
+  // Raster formats (input and output supported)
+
+  /// AV1 Image File Format (AVIF).
+  AVIF,
+  /// Bitmap format (BMP).
+  BMP,
   /// JPEG format (supports both `.jpg` and `.jpeg` extensions).
   JPG,
+  /// Portable Network Graphics format.
+  PNG,
+  /// Tagged Image File Format.
+  TIFF,
   /// WebP format.
   WEBP,
+
+  // Vector format (input-only; output not supported)
+
   /// Scalable Vector Graphics format (input-only; SVG output is not supported).
   SVG,
 }
@@ -25,8 +36,11 @@ impl ImageFormat {
   pub fn from_extension(path: &Path) -> Result<Self, ImageConvertError> {
     match path.extension().and_then(|e| e.to_str()) {
       Some(ext) => match ext.to_lowercase().as_str() {
-        "png" => Ok(ImageFormat::PNG),
+        "avif" => Ok(ImageFormat::AVIF),
+        "bmp" => Ok(ImageFormat::BMP),
         "jpg" | "jpeg" => Ok(ImageFormat::JPG),
+        "png" => Ok(ImageFormat::PNG),
+        "tif" | "tiff" => Ok(ImageFormat::TIFF),
         "webp" => Ok(ImageFormat::WEBP),
         "svg" => Ok(ImageFormat::SVG),
         _ => Err(ImageConvertError::UnsupportedFormat(ext.into())),
@@ -42,8 +56,11 @@ impl ImageFormat {
   /// Case-insensitive. Returns `UnsupportedFormat` if the string does not match.
   pub fn from_str(s: &str) -> Result<Self, ImageConvertError> {
     match s.to_lowercase().as_str() {
-      "png" => Ok(ImageFormat::PNG),
+      "avif" => Ok(ImageFormat::AVIF),
+      "bmp" => Ok(ImageFormat::BMP),
       "jpg" | "jpeg" => Ok(ImageFormat::JPG),
+      "png" => Ok(ImageFormat::PNG),
+      "tif" | "tiff" => Ok(ImageFormat::TIFF),
       "webp" => Ok(ImageFormat::WEBP),
       "svg" => Ok(ImageFormat::SVG),
       _ => Err(ImageConvertError::UnsupportedFormat(s.into())),
@@ -53,8 +70,11 @@ impl ImageFormat {
   /// Returns the standard file extension for this format (e.g., `"png"`, `"jpg"`, `"webp"`, `"svg"`).
   pub fn extension(&self) -> &str {
     match self {
-      ImageFormat::PNG => "png",
+      ImageFormat::AVIF => "avif",
+      ImageFormat::BMP => "bmp",
       ImageFormat::JPG => "jpg",
+      ImageFormat::PNG => "png",
+      ImageFormat::TIFF => "tiff",
       ImageFormat::WEBP => "webp",
       ImageFormat::SVG => "svg",
     }
@@ -82,14 +102,6 @@ mod tests {
   use std::path::Path;
 
   #[test]
-  fn from_extension_png() {
-    assert_eq!(
-      ImageFormat::from_extension(Path::new("image.png")).unwrap(),
-      ImageFormat::PNG
-    );
-  }
-
-  #[test]
   fn from_extension_jpg() {
     assert_eq!(
       ImageFormat::from_extension(Path::new("photo.jpg")).unwrap(),
@@ -102,6 +114,14 @@ mod tests {
     assert_eq!(
       ImageFormat::from_extension(Path::new("photo.jpeg")).unwrap(),
       ImageFormat::JPG
+    );
+  }
+
+  #[test]
+  fn from_extension_png() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("image.png")).unwrap(),
+      ImageFormat::PNG
     );
   }
 
@@ -131,9 +151,9 @@ mod tests {
 
   #[test]
   fn from_extension_unsupported() {
-    let err = ImageFormat::from_extension(Path::new("file.bmp")).unwrap_err();
+    let err = ImageFormat::from_extension(Path::new("file.gif")).unwrap_err();
     assert!(matches!(err, ImageConvertError::UnsupportedFormat(_)));
-    assert!(err.to_string().contains("bmp"));
+    assert!(err.to_string().contains("gif"));
   }
 
   #[test]
@@ -175,9 +195,9 @@ mod tests {
 
   #[test]
   fn from_str_unsupported() {
-    let err = ImageFormat::from_str("bmp").unwrap_err();
+    let err = ImageFormat::from_str("gif").unwrap_err();
     assert!(matches!(err, ImageConvertError::UnsupportedFormat(_)));
-    assert!(err.to_string().contains("bmp"));
+    assert!(err.to_string().contains("gif"));
   }
 
   #[test]

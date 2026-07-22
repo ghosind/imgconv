@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-image = "0.25"
+image = { version = "0.25", features = ["avif", "avif-native"] }
 resvg = "0.47"
 thiserror = "2"
 tiny-skia = "0.12"

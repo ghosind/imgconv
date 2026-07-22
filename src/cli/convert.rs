@@ -26,7 +26,7 @@ pub struct ConvertArgs {
   #[arg(short = 'o', long)]
   pub output: Option<String>,
 
-  /// Target output format (`-f` / `--format`). Supported values: `png`, `jpg`, `jpeg`, `webp`.
+  /// Target output format (`-f` / `--format`). Supported values: `avif`, `bmp`, `png`, `jpg`, `jpeg`, `tiff`, `webp`.
   /// If omitted, the format is inferred from the output file extension. Defaults to `png`.
   #[arg(short = 'f', long)]
   pub format: Option<String>,

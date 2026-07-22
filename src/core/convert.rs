@@ -1,6 +1,6 @@
 use crate::core::format::ImageFormat;
 use crate::core::traits::ImageConverter;
-use crate::converter::raster::{JPGConverter, PNGConverter, WEBPConverter};
+use crate::converter::raster::{AVIFConverter, BMPConverter, JPGConverter, PNGConverter, TIFFConverter, WEBPConverter};
 use crate::converter::vector::SVGConverter;
 
 /// Returns the appropriate [`ImageConverter`] implementation for the given format.
@@ -8,8 +8,11 @@ use crate::converter::vector::SVGConverter;
 /// This acts as a simple factory / registry mapping each input format to its converter.
 pub fn get_converter(format: ImageFormat) -> Box<dyn ImageConverter> {
   match format {
-    ImageFormat::PNG => Box::new(PNGConverter),
+    ImageFormat::AVIF => Box::new(AVIFConverter),
+    ImageFormat::BMP => Box::new(BMPConverter),
     ImageFormat::JPG => Box::new(JPGConverter),
+    ImageFormat::PNG => Box::new(PNGConverter),
+    ImageFormat::TIFF => Box::new(TIFFConverter),
     ImageFormat::WEBP => Box::new(WEBPConverter),
     ImageFormat::SVG => Box::new(SVGConverter),
   }

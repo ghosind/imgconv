@@ -26,12 +26,21 @@ pub fn encode_image(
   let mut writer = std::io::BufWriter::new(file);
 
   match format {
-    ImageFormat::PNG => {
-      img.write_to(&mut writer, image::ImageFormat::Png)?;
+    ImageFormat::AVIF => {
+      img.write_to(&mut writer, image::ImageFormat::Avif)?;
+    }
+    ImageFormat::BMP => {
+      img.write_to(&mut writer, image::ImageFormat::Bmp)?;
     }
     ImageFormat::JPG => {
       let mut encoder = image::codecs::jpeg::JpegEncoder::new(&mut writer);
       encoder.encode_image(img)?;
+    }
+    ImageFormat::PNG => {
+      img.write_to(&mut writer, image::ImageFormat::Png)?;
+    }
+    ImageFormat::TIFF => {
+      img.write_to(&mut writer, image::ImageFormat::Tiff)?;
     }
     ImageFormat::WEBP => {
       img.write_to(&mut writer, image::ImageFormat::WebP)?;
