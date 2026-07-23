@@ -4,11 +4,29 @@ A fast and simple CLI tool for converting images between different formats.
 
 ## Installation
 
-### Prerequisites
+### Download Prebuilt Binaries
 
-- [Rust](https://www.rust-lang.org/) (edition 2024 or later)
+Prebuilt binaries are available on the [Releases](https://github.com/ghosind/imgconv/releases) page for:
 
-### Build from source
+- Linux (x86_64)
+- macOS (x86_64 / Apple Silicon)
+- Windows (x86_64)
+
+> **Note:** The AVIF format requires `libdav1d` at runtime. See [System Dependencies](#system-dependencies) below for installation instructions.
+
+### System Dependencies
+
+For AVIF format support, `libdav1d` is required:
+
+| OS | Install Command |
+|----|----------------|
+| **Linux** (Debian/Ubuntu) | `sudo apt-get install libdav1d-dev` |
+| **macOS** | `brew install dav1d` |
+| **Windows** | `vcpkg install dav1d` |
+
+### Build from Source
+
+**Prerequisites:** [Rust](https://www.rust-lang.org/) (edition 2024 or later), plus the [System Dependencies](#system-dependencies) above if AVIF support is needed.
 
 ```bash
 git clone https://github.com/ghosind/imgconv.git
