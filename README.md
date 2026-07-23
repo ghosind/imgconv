@@ -9,7 +9,7 @@ A fast and simple CLI tool for converting images between different formats.
 Prebuilt binaries are available on the [Releases](https://github.com/ghosind/imgconv/releases) page for:
 
 - Linux (x86_64)
-- macOS (x86_64 / Apple Silicon)
+- macOS (Apple Silicon)
 - Windows (x86_64)
 
 > **Note:** The AVIF format requires `libdav1d` at runtime. See [System Dependencies](#system-dependencies) below for installation instructions.

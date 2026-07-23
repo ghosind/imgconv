@@ -17,9 +17,6 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: imgconv-linux-x86_64
-          - os: macos-13
-            target: x86_64-apple-darwin
-            artifact: imgconv-macos-x86_64
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: imgconv-macos-aarch64
@@ -130,7 +127,6 @@ jobs:
           draft: true
           files: |
             imgconv-linux-x86_64/imgconv-linux-x86_64.tar.gz
-            imgconv-macos-x86_64/imgconv-macos-x86_64.tar.gz
             imgconv-macos-aarch64/imgconv-macos-aarch64.tar.gz
             imgconv-windows-x86_64/imgconv-windows-x86_64.zip
           generate_release_notes: true
