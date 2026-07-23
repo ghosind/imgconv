@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: imgconv-linux-x86_64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: imgconv-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: imgconv-macos-aarch64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: imgconv-windows-x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libdav1d-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install dav1d
+
+      - name: Install system dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install pkgconfiglite -y --no-progress --limit-output
+          vcpkg install dav1d
+          $vcpkgInstalled = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows"
+          echo "$vcpkgInstalled\bin" >> $env:GITHUB_PATH
+          echo "PKG_CONFIG_PATH=$vcpkgInstalled\lib\pkgconfig" >> $env:GITHUB_ENV
+          echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Strip debug symbols (Linux)
+        if: runner.os == 'Linux'
+        run: strip target/${{ matrix.target }}/release/imgconv
+
+      - name: Strip debug symbols (macOS)
+        if: runner.os == 'macOS'
+        run: strip target/${{ matrix.target }}/release/imgconv
+
+      - name: Package artifact (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ${{ matrix.artifact }}.tar.gz imgconv
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ${{ matrix.artifact }}.zip imgconv.exe
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          files: |
+            imgconv-linux-x86_64/imgconv-linux-x86_64.tar.gz
+            imgconv-macos-x86_64/imgconv-macos-x86_64.tar.gz
+            imgconv-macos-aarch64/imgconv-macos-aarch64.tar.gz
+            imgconv-windows-x86_64/imgconv-windows-x86_64.zip
+          generate_release_notes: true
