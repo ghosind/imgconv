@@ -24,11 +24,9 @@ jobs:
           path: |
             /var/cache/apt/archives
             ~/Library/Caches/Homebrew
-            /usr/local/Cellar/dav1d
-            /opt/homebrew/Cellar/dav1d
             C:\vcpkg\installed
             C:\vcpkg\packages
-          key: sysdeps-${{ runner.os }}-dav1d-v1-${{ hashFiles('.github/workflows/test.yml') }}
+          key: sysdeps-${{ runner.os }}-dav1d-${{ hashFiles('.github/workflows/test.yml') }}
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
@@ -40,7 +38,14 @@ jobs:
       - name: Install system dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew list dav1d &>/dev/null || brew install dav1d
+          brew install dav1d
+          # Homebrew libs aren't in the default dyld search path; add them so the
+          # runtime linker can find libdav1d at test time.
+          if [ -d /opt/homebrew/lib ]; then
+            echo "DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib" >> $GITHUB_ENV
+          elif [ -d /usr/local/lib ]; then
+            echo "DYLD_FALLBACK_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
+          fi
 
       - name: Install system dependencies (Windows)
         if: runner.os == 'Windows'
