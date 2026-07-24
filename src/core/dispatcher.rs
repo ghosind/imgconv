@@ -73,6 +73,14 @@ mod tests {
     path
   }
 
+  fn create_temp_ico() -> (std::path::PathBuf, tempfile::TempDir) {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("test.ico");
+    let img = image::DynamicImage::new_rgba8(1, 1);
+    img.save(&path).unwrap();
+    (path, dir)
+  }
+
   #[test]
   fn dispatch_file_not_found() {
     let result = dispatch(
@@ -177,6 +185,33 @@ mod tests {
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
+  }
+
+  #[test]
+  fn dispatch_success_ico_to_png() {
+    let (input, _dir) = create_temp_ico();
+    let out = _dir.path().join("out.png");
+    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn dispatch_success_ico_to_jpg() {
+    let (input, _dir) = create_temp_ico();
+    let out = _dir.path().join("out.jpg");
+    let result = dispatch(&input, &out, ImageFormat::JPG, false, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn dispatch_success_ico_to_webp() {
+    let (input, _dir) = create_temp_ico();
+    let out = _dir.path().join("out.webp");
+    let result = dispatch(&input, &out, ImageFormat::WEBP, false, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
   }
 
   #[test]

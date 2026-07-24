@@ -32,6 +32,9 @@ pub fn encode_image(
     ImageFormat::BMP => {
       img.write_to(&mut writer, image::ImageFormat::Bmp)?;
     }
+    ImageFormat::ICO => {
+      img.write_to(&mut writer, image::ImageFormat::Ico)?;
+    }
     ImageFormat::JPG => {
       let mut encoder = image::codecs::jpeg::JpegEncoder::new(&mut writer);
       encoder.encode_image(img)?;
@@ -104,5 +107,15 @@ mod tests {
       vec![],
     );
     assert!(result.is_err());
+  }
+
+  #[test]
+  fn encode_ico_works() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.ico");
+    let result = encode_image(&mut img, ImageFormat::ICO, &out, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
   }
 }

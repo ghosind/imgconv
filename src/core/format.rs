@@ -14,6 +14,8 @@ pub enum ImageFormat {
   AVIF,
   /// Bitmap format (BMP).
   BMP,
+  /// ICO format (supports `.ico` extension).
+  ICO,
   /// JPEG format (supports both `.jpg` and `.jpeg` extensions).
   JPG,
   /// Portable Network Graphics format.
@@ -38,6 +40,7 @@ impl ImageFormat {
       Some(ext) => match ext.to_lowercase().as_str() {
         "avif" => Ok(ImageFormat::AVIF),
         "bmp" => Ok(ImageFormat::BMP),
+        "ico" => Ok(ImageFormat::ICO),
         "jpg" | "jpeg" => Ok(ImageFormat::JPG),
         "png" => Ok(ImageFormat::PNG),
         "tif" | "tiff" => Ok(ImageFormat::TIFF),
@@ -58,6 +61,7 @@ impl ImageFormat {
     match s.to_lowercase().as_str() {
       "avif" => Ok(ImageFormat::AVIF),
       "bmp" => Ok(ImageFormat::BMP),
+      "ico" => Ok(ImageFormat::ICO),
       "jpg" | "jpeg" => Ok(ImageFormat::JPG),
       "png" => Ok(ImageFormat::PNG),
       "tif" | "tiff" => Ok(ImageFormat::TIFF),
@@ -72,6 +76,7 @@ impl ImageFormat {
     match self {
       ImageFormat::AVIF => "avif",
       ImageFormat::BMP => "bmp",
+      ImageFormat::ICO => "ico",
       ImageFormat::JPG => "jpg",
       ImageFormat::PNG => "png",
       ImageFormat::TIFF => "tiff",
@@ -100,6 +105,14 @@ impl ImageFormat {
 mod tests {
   use super::*;
   use std::path::Path;
+
+  #[test]
+  fn from_extension_ico() {
+    assert_eq!(
+      ImageFormat::from_extension(Path::new("icon.ico")).unwrap(),
+      ImageFormat::ICO
+    );
+  }
 
   #[test]
   fn from_extension_jpg() {
@@ -166,6 +179,11 @@ mod tests {
   #[test]
   fn from_str_png() {
     assert_eq!(ImageFormat::from_str("png").unwrap(), ImageFormat::PNG);
+  }
+
+  #[test]
+  fn from_str_ico() {
+    assert_eq!(ImageFormat::from_str("ico").unwrap(), ImageFormat::ICO);
   }
 
   #[test]

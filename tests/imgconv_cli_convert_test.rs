@@ -8,6 +8,14 @@ fn create_test_png(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
   path
 }
 
+/// Helper: create a minimal ICO in a temp directory
+fn create_test_ico(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
+  let path = dir.join(name);
+  let img = image::DynamicImage::new_rgba8(4, 4);
+  img.save(&path).unwrap();
+  path
+}
+
 /// Helper: create a minimal SVG in a temp directory
 fn create_test_svg(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
   let path = dir.join(name);
@@ -87,6 +95,25 @@ fn cli_convert_png_to_webp() {
 
   assert!(status.success());
   assert!(output.exists());
+}
+
+#[test]
+fn cli_convert_ico_to_png() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_ico(dir.path(), "icon.ico");
+  let output = dir.path().join("icon.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
 }
 
 #[test]

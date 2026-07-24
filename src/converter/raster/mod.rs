@@ -2,6 +2,8 @@
 pub mod avif;
 /// BMP image converter.
 pub mod bmp;
+/// ICO image converter.
+pub mod ico;
 /// JPEG image converter.
 pub mod jpg;
 /// PNG image converter.
@@ -15,6 +17,7 @@ pub mod util;
 
 pub use avif::AVIFConverter;
 pub use bmp::BMPConverter;
+pub use ico::ICOConverter;
 pub use jpg::JPGConverter;
 pub use png::PNGConverter;
 pub use tiff::TIFFConverter;
