@@ -85,6 +85,20 @@ impl ImageFormat {
     }
   }
 
+  /// Returns the corresponding `image::ImageFormat` if supported for output.
+  pub fn image_format(&self) -> Option<image::ImageFormat> {
+    match self {
+      ImageFormat::AVIF => Some(image::ImageFormat::Avif),
+      ImageFormat::BMP => Some(image::ImageFormat::Bmp),
+      ImageFormat::ICO => Some(image::ImageFormat::Ico),
+      ImageFormat::JPG => Some(image::ImageFormat::Jpeg),
+      ImageFormat::PNG => Some(image::ImageFormat::Png),
+      ImageFormat::TIFF => Some(image::ImageFormat::Tiff),
+      ImageFormat::WEBP => Some(image::ImageFormat::WebP),
+      ImageFormat::SVG => None, // SVG is not supported for output
+    }
+  }
+
   /// Validates that the combination of input and target formats is supported.
   ///
   /// Currently, SVG output is rejected since the application cannot encode to SVG.
@@ -258,5 +272,45 @@ mod tests {
   #[test]
   fn validate_webp_target_is_ok() {
     assert!(ImageFormat::validate(ImageFormat::PNG, ImageFormat::WEBP).is_ok());
+  }
+
+  #[test]
+  fn image_format_avif() {
+    assert_eq!(ImageFormat::AVIF.image_format(), Some(image::ImageFormat::Avif));
+  }
+
+  #[test]
+  fn image_format_bmp() {
+    assert_eq!(ImageFormat::BMP.image_format(), Some(image::ImageFormat::Bmp));
+  }
+
+  #[test]
+  fn image_format_ico() {
+    assert_eq!(ImageFormat::ICO.image_format(), Some(image::ImageFormat::Ico));
+  }
+
+  #[test]
+  fn image_format_jpg() {
+    assert_eq!(ImageFormat::JPG.image_format(), Some(image::ImageFormat::Jpeg));
+  }
+
+  #[test]
+  fn image_format_png() {
+    assert_eq!(ImageFormat::PNG.image_format(), Some(image::ImageFormat::Png));
+  }
+
+  #[test]
+  fn image_format_tiff() {
+    assert_eq!(ImageFormat::TIFF.image_format(), Some(image::ImageFormat::Tiff));
+  }
+
+  #[test]
+  fn image_format_webp() {
+    assert_eq!(ImageFormat::WEBP.image_format(), Some(image::ImageFormat::WebP));
+  }
+
+  #[test]
+  fn image_format_svg_is_none() {
+    assert_eq!(ImageFormat::SVG.image_format(), None);
   }
 }

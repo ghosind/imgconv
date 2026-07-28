@@ -26,6 +26,30 @@ fn create_test_svg(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
   path
 }
 
+/// Helper: create a minimal AVIF in a temp directory
+fn create_test_avif(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
+  let path = dir.join(name);
+  let img = image::DynamicImage::new_rgba8(4, 4);
+  img.save(&path).unwrap();
+  path
+}
+
+/// Helper: create a minimal BMP in a temp directory
+fn create_test_bmp(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
+  let path = dir.join(name);
+  let img = image::DynamicImage::new_rgba8(4, 4);
+  img.save(&path).unwrap();
+  path
+}
+
+/// Helper: create a minimal TIFF in a temp directory
+fn create_test_tiff(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
+  let path = dir.join(name);
+  let img = image::DynamicImage::new_rgba8(4, 4);
+  img.save(&path).unwrap();
+  path
+}
+
 #[test]
 fn cli_convert_svg_default() {
   let dir = tempfile::tempdir().unwrap();
@@ -159,6 +183,120 @@ fn cli_convert_svg_to_webp() {
   let dir = tempfile::tempdir().unwrap();
   let input = create_test_svg(dir.path(), "art.svg");
   let output = dir.path().join("art.webp");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_png_to_avif() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.avif");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success(), "PNG to AVIF conversion failed");
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_png_to_bmp() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.bmp");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_png_to_tiff() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.tiff");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_avif_to_png() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_avif(dir.path(), "input.avif");
+  let output = dir.path().join("output.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success(), "AVIF to PNG conversion failed");
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_bmp_to_png() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_bmp(dir.path(), "input.bmp");
+  let output = dir.path().join("output.png");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  assert!(output.metadata().unwrap().len() > 0);
+}
+
+#[test]
+fn cli_convert_tiff_to_png() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_tiff(dir.path(), "input.tiff");
+  let output = dir.path().join("output.png");
 
   let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
     .arg("convert")

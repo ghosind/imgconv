@@ -26,32 +26,20 @@ pub fn encode_image(
   let mut writer = std::io::BufWriter::new(file);
 
   match format {
-    ImageFormat::AVIF => {
-      img.write_to(&mut writer, image::ImageFormat::Avif)?;
-    }
-    ImageFormat::BMP => {
-      img.write_to(&mut writer, image::ImageFormat::Bmp)?;
-    }
-    ImageFormat::ICO => {
-      img.write_to(&mut writer, image::ImageFormat::Ico)?;
-    }
-    ImageFormat::JPG => {
-      let mut encoder = image::codecs::jpeg::JpegEncoder::new(&mut writer);
-      encoder.encode_image(img)?;
-    }
-    ImageFormat::PNG => {
-      img.write_to(&mut writer, image::ImageFormat::Png)?;
-    }
-    ImageFormat::TIFF => {
-      img.write_to(&mut writer, image::ImageFormat::Tiff)?;
-    }
-    ImageFormat::WEBP => {
-      img.write_to(&mut writer, image::ImageFormat::WebP)?;
-    }
     ImageFormat::SVG => {
       return Err(ImageConvertError::UnsupportedFormat(
         "SVG output is not supported.".into(),
       ));
+    }
+    format => {
+      if let Some(image_format) = format.image_format() {
+        img.write_to(&mut writer, image_format)?;
+      } else {
+        return Err(ImageConvertError::UnsupportedFormat(format!(
+          "Output format {:?} is not supported.",
+          format
+        )));
+      }
     }
   }
 
@@ -98,6 +86,57 @@ mod tests {
   }
 
   #[test]
+  fn encode_ico_works() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.ico");
+    let result = encode_image(&mut img, ImageFormat::ICO, &out, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_avif_works() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.avif");
+    let result = encode_image(&mut img, ImageFormat::AVIF, &out, vec![]);
+    assert!(result.is_ok(), "AVIF encode failed: {:?}", result.err());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_bmp_works() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.bmp");
+    let result = encode_image(&mut img, ImageFormat::BMP, &out, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_tiff_works() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.tiff");
+    let result = encode_image(&mut img, ImageFormat::TIFF, &out, vec![]);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_svg_rejected() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.svg");
+    let result = encode_image(&mut img, ImageFormat::SVG, &out, vec![]);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("not supported"));
+  }
+
+  #[test]
   fn encode_to_nonexistent_directory_fails() {
     let mut img = make_test_image();
     let result = encode_image(
@@ -110,12 +149,17 @@ mod tests {
   }
 
   #[test]
-  fn encode_ico_works() {
-    let mut img = make_test_image();
+  fn encode_with_resize_processor() {
+    let mut img = image::DynamicImage::new_rgba8(100, 50);
     let dir = tempfile::tempdir().unwrap();
-    let out = dir.path().join("test.ico");
-    let result = encode_image(&mut img, ImageFormat::ICO, &out, vec![]);
+    let out = dir.path().join("test.png");
+    let processor = crate::processor::resize::ResizeProcessor::new(Some(32), None);
+    let result = encode_image(&mut img, ImageFormat::PNG, &out, vec![Box::new(processor)]);
     assert!(result.is_ok());
     assert!(out.exists());
+    // Verify the resize was applied
+    let saved = image::open(&out).unwrap();
+    assert_eq!(saved.width(), 32);
+    assert_eq!(saved.height(), 16); // aspect ratio preserved
   }
 }
