@@ -197,7 +197,7 @@ mod tests {
     let mut img = image::DynamicImage::new_rgba8(100, 50);
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.png");
-    let processor = crate::processor::resize::ResizeProcessor::new(Some(32), None);
+    let processor = crate::processor::resize::ResizeProcessor::new(Some(32), None, None);
     let opts = ConverterOptions {
       target_format: ImageFormat::PNG,
       processors: vec![Box::new(processor)],

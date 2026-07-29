@@ -27,7 +27,8 @@ pub struct ConvertArgs {
   #[arg(short = 'o', long)]
   pub output: Option<String>,
 
-  /// Target output format (`-f` / `--format`). Supported values: `avif`, `bmp`, `ico`, `png`, `jpg`, `jpeg`, `tiff`, `webp`.
+  /// Target output format (`-f` / `--format`). Supported values: `avif`, `bmp`, `ico`, `png`,
+  /// `jpg`, `jpeg`, `tiff`, `webp`.
   /// If omitted, the format is inferred from the output file extension. Defaults to `png`.
   #[arg(short = 'f', long)]
   pub format: Option<String>,
@@ -41,6 +42,19 @@ pub struct ConvertArgs {
   /// When only one dimension is specified, the other is auto-calculated to preserve aspect ratio.
   #[arg(short = 'h', long)]
   pub height: Option<u32>,
+
+  /// Resampling filter to use when resizing the image.
+  ///
+  /// Supported values (from fastest/lowest quality to highest):
+  ///   - `nearest`    — Nearest neighbour, fastest, blocky results
+  ///   - `triangle`   — Linear interpolation, moderate quality
+  ///   - `catmullrom` — Catmull-Rom cubic (bicubic), sharp, good for upscaling
+  ///   - `gaussian`   — Gaussian, good for downscaling, some detail loss
+  ///   - `lanczos3`   — Lanczos a=3, highest quality, sharpest (default)
+  ///
+  /// If omitted, `lanczos3` is used.
+  #[arg(long, verbatim_doc_comment)]
+  pub filter: Option<String>,
 }
 
 /// Executes the image conversion workflow for the `convert` subcommand.
@@ -87,10 +101,11 @@ pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::
 fn build_processors(args: &ConvertArgs) -> Vec<Box<dyn ImageProcessor>> {
   let mut processors: Vec<Box<dyn ImageProcessor>> = Vec::new();
 
-  if args.width.is_some() || args.height.is_some() {
+  if args.width.is_some() || args.height.is_some() || args.filter.is_some() {
     processors.push(Box::new(ResizeProcessor::new(
       args.width,
       args.height,
+      args.filter.clone(),
     )));
   }
 
@@ -134,6 +149,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("custom.png"));
@@ -148,6 +164,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("photo.png"));
@@ -162,6 +179,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("file_without_ext.png"));
@@ -176,6 +194,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("output.jpg"));
@@ -190,6 +209,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("image.png"));
@@ -210,6 +230,7 @@ mod tests {
       width: None,
       height: None,
       help: None,
+      filter: None,
     };
 
     let cli = Cli {

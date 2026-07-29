@@ -71,7 +71,7 @@ imgconv convert input.jpg -f webp
 
 ### Resize images
 
-Use `-w` / `--width` and `-h` / `--height` to resize the image during conversion. The Lanczos3 filter is used for high-quality resampling.
+Use `-w` / `--width` and `-h` / `--height` to resize the image during conversion.
 
 When only one dimension is specified, the other is automatically calculated to preserve the original aspect ratio:
 
@@ -85,6 +85,31 @@ imgconv convert input.png -o output.jpg -w 800
 # Scale to height 600, width auto-calculated
 imgconv convert input.jpg -o output.png -h 600
 ```
+
+### Select resampling filter
+
+Use `--filter` to choose the resampling algorithm when resizing. The default is `lanczos3`, which provides the highest quality.
+
+```bash
+# Use nearest-neighbour (fastest, lowest quality)
+imgconv convert input.png -o output.jpg -w 200 --filter nearest
+
+# Use Catmull-Rom (bicubic) for sharp upscaling
+imgconv convert input.png -o output.jpg -w 800 --filter catmullrom
+
+# Use Gaussian for smooth downscaling
+imgconv convert input.png -o output.jpg -w 200 --filter gaussian
+```
+
+Supported filters, ordered from fastest to highest quality:
+
+| Filter | Description |
+|--------|-------------|
+| `nearest` | Nearest neighbour — fastest, lowest quality, produces blocky results |
+| `triangle` | Linear interpolation — moderate quality, smoother than nearest |
+| `catmullrom` | Catmull-Rom cubic (bicubic) — sharp, good for upscaling |
+| `gaussian` | Gaussian — smooth, good for downscaling, may lose fine detail |
+| `lanczos3` | Lanczos with window a=3 — highest quality, sharpest **(default)** |
 
 ### SVG rasterization
 
@@ -141,6 +166,7 @@ Convert an image file to another format.
 | `-f`, `--format` | Target output format (default: `png`). Supported: `avif`, `bmp`, `jpg`/`jpeg`, `png`, `tiff`, `webp` |
 | `-w`, `--width` | Target width in pixels. When only width is given, height is auto-calculated to preserve aspect ratio |
 | `-h`, `--height` | Target height in pixels. When only height is given, width is auto-calculated to preserve aspect ratio |
+| `--filter` | Resampling filter for resizing. Supported: `nearest`, `triangle`, `catmullrom`, `gaussian`, `lanczos3` (default) |
 
 If neither `--output` nor `--format` is specified, the output defaults to a PNG file with the same base name as the input.
 
@@ -194,6 +220,15 @@ imgconv convert input.png -o existing.jpg -O
 
 # Quiet conversion with resize
 imgconv convert input.jpg -f webp -w 800 -Q
+
+# Resize with nearest-neighbour filter (fastest)
+imgconv convert input.png -o output.jpg -w 200 --filter nearest
+
+# Resize with Catmull-Rom filter (sharp upscaling)
+imgconv convert input.png -o output.jpg -w 800 --filter catmullrom
+
+# Resize with Gaussian filter (smooth downscaling)
+imgconv convert input.png -o output.jpg -h 600 --filter gaussian
 ```
 
 ## License
