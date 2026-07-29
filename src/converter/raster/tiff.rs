@@ -1,8 +1,8 @@
 use std::path::Path;
 
+use crate::converter::options::ConverterOptions;
 use crate::converter::raster::util::convert;
-use crate::core::format::ImageFormat;
-use crate::core::traits::{ImageConverter, ImageProcessor};
+use crate::core::traits::ImageConverter;
 use crate::error::convert::ImageConvertError;
 
 /// Converter for TIFF input images.
@@ -15,16 +15,16 @@ impl ImageConverter for TIFFConverter {
     &self,
     input_path: &Path,
     output_path: &Path,
-    target_format: ImageFormat,
-    processors: Vec<Box<dyn ImageProcessor>>,
+    options: &ConverterOptions,
   ) -> Result<(), ImageConvertError> {
-    convert(input_path, output_path, target_format, processors)
+    convert(input_path, output_path, options)
   }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::core::format::ImageFormat;
   use image::DynamicImage;
 
   fn create_test_tiff(dir: &tempfile::TempDir) -> std::path::PathBuf {
@@ -39,7 +39,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_tiff(&dir);
     let output = dir.path().join("out.png");
-    let result = TIFFConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = TIFFConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -49,7 +54,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_tiff(&dir);
     let output = dir.path().join("out.jpg");
-    let result = TIFFConverter.convert(&input, &output, ImageFormat::JPG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = TIFFConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -59,7 +69,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_tiff(&dir);
     let output = dir.path().join("out.webp");
-    let result = TIFFConverter.convert(&input, &output, ImageFormat::WEBP, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = TIFFConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{Args};
 
 use crate::cli::args::{Cli};
+use crate::converter::options::ConverterOptions;
 use crate::core::format::ImageFormat;
 use crate::core::dispatcher;
 use crate::core::traits::ImageProcessor;
@@ -69,13 +70,13 @@ pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::
     output_format.extension(),
   ));
 
-  dispatcher::dispatch(
-    input_path,
-    &output_path,
-    output_format,
-    cli.overwrite,
+  let options = ConverterOptions {
+    target_format: output_format,
     processors,
-  )?;
+    overwrite: cli.overwrite,
+  };
+
+  dispatcher::dispatch(input_path, &output_path, &options)?;
 
   out.success(&format!("Converted: {} → {}", args.input, output_path.display()));
 
@@ -221,12 +222,15 @@ mod tests {
     match &cli.command {
       Commands::Convert(args) => {
         let out_path = determine_output_path(args).unwrap();
+        let opts = crate::converter::options::ConverterOptions {
+          target_format: ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap(),
+          processors: vec![],
+          overwrite: false,
+        };
         let result = crate::core::dispatcher::dispatch(
           std::path::Path::new(&args.input),
           &out_path,
-          ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap(),
-          false,
-          vec![],
+          &opts,
         );
         assert!(result.is_ok());
         assert!(out_path.exists());

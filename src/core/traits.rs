@@ -1,6 +1,6 @@
 use image::DynamicImage;
 
-use crate::core::format::ImageFormat;
+use crate::converter::options::ConverterOptions;
 use crate::error::convert::ImageConvertError;
 
 /// Trait for image format converters.
@@ -13,7 +13,7 @@ pub trait ImageConverter {
   /// # Arguments
   /// * `input_path`  - Path to the source image file.
   /// * `output_path` - Path where the converted image will be written.
-  /// * `target_format` - The desired output image format.
+  /// * `options`     - Configuration options including target format and processors.
   ///
   /// # Errors
   /// Returns [`ImageConvertError`] if the input cannot be read, the conversion
@@ -22,11 +22,23 @@ pub trait ImageConverter {
     &self,
     input_path: &std::path::Path,
     output_path: &std::path::Path,
-    target_format: ImageFormat,
-    processors: Vec<Box<dyn ImageProcessor>>,
+    options: &ConverterOptions,
   ) -> Result<(), ImageConvertError>;
 }
 
+/// Trait for image processors.
+///
+/// Each image processor implements a specific image processing operation
+/// (e.g., resizing, filtering, color adjustments) that can be applied to an image
+/// before or after conversion. Processors can be chained together to perform
+/// multiple operations in sequence.
 pub trait ImageProcessor: std::fmt::Debug {
+  /// Processes the given image in place.
+  ///
+  /// # Arguments
+  /// * `img` - A mutable reference to the image to be processed.
+  ///
+  /// # Errors
+  /// Returns [`ImageConvertError`] if the processing operation fails.
   fn process(&self, img: &mut DynamicImage) -> Result<(), ImageConvertError>;
 }

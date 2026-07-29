@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use crate::core::format::ImageFormat;
-use crate::core::traits::ImageProcessor;
+use crate::converter::options::ConverterOptions;
 use crate::error::convert::ImageConvertError;
 use crate::utils::encode::encode_image;
 
@@ -12,17 +11,17 @@ use crate::utils::encode::encode_image;
 pub(crate) fn convert(
   input_path: &Path,
   output_path: &Path,
-  target_format: ImageFormat,
-  processors: Vec<Box<dyn ImageProcessor>>,
+  options: &ConverterOptions,
 ) -> Result<(), ImageConvertError> {
   let mut img = image::open(input_path)?;
 
-  encode_image(&mut img, target_format, output_path, processors)
+  encode_image(&mut img, output_path, options)
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::core::format::ImageFormat;
   use image::DynamicImage;
 
   fn create_test_png(dir: &tempfile::TempDir) -> std::path::PathBuf {
@@ -37,7 +36,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.jpg");
-    let result = convert(&input, &output, ImageFormat::JPG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -47,7 +51,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.webp");
-    let result = convert(&input, &output, ImageFormat::WEBP, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -57,7 +66,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_png(&dir);
     let output = dir.path().join("out.png");
-    let result = convert(&input, &output, ImageFormat::PNG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -67,7 +81,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("missing.png");
     let output = dir.path().join("out.png");
-    let result = convert(&input, &output, ImageFormat::PNG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = convert(&input, &output, &opts);
     assert!(result.is_err());
   }
 }

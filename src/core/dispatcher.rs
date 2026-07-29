@@ -1,8 +1,8 @@
 use std::path::Path;
 
+use crate::converter::options::ConverterOptions;
 use crate::core::convert;
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageProcessor;
 use crate::error::convert::ImageConvertError;
 
 /// Validates inputs and orchestrates the full conversion workflow.
@@ -17,9 +17,7 @@ use crate::error::convert::ImageConvertError;
 pub fn dispatch(
   input_path: &Path,
   output_path: &Path,
-  output_format: ImageFormat,
-  overwrite: bool,
-  processors: Vec<Box<dyn ImageProcessor>>,
+  options: &ConverterOptions,
 ) -> Result<(), ImageConvertError> {
   if !input_path.exists() {
     return Err(ImageConvertError::FileNotFound(
@@ -38,9 +36,9 @@ pub fn dispatch(
 
   let input_format = ImageFormat::from_extension(input_path)?;
 
-  ImageFormat::validate(input_format, output_format)?;
+  ImageFormat::validate(input_format, options.target_format)?;
 
-  if !overwrite && output_path.exists() {
+  if !options.overwrite && output_path.exists() {
     return Err(ImageConvertError::FileExists(
       output_path.display().to_string(),
     ));
@@ -48,7 +46,7 @@ pub fn dispatch(
 
   let converter = convert::get_converter(input_format);
 
-  converter.convert(input_path, output_path, output_format, processors)
+  converter.convert(input_path, output_path, options)
 }
 
 #[cfg(test)]
@@ -83,12 +81,15 @@ mod tests {
 
   #[test]
   fn dispatch_file_not_found() {
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
     let result = dispatch(
       Path::new("/nonexistent/path/file.png"),
       Path::new("/tmp/output.png"),
-      ImageFormat::PNG,
-      false,
-      vec![],
+      &opts,
     );
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::FileNotFound(_)));
@@ -101,7 +102,12 @@ mod tests {
     let bad_input = _dir.path().join("test.xyz");
     std::fs::rename(&input, &bad_input).unwrap();
     let out = _dir.path().join("out.png");
-    let result = dispatch(&bad_input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&bad_input, &out, &opts);
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::UnsupportedFormat(_)));
   }
@@ -110,7 +116,12 @@ mod tests {
   fn dispatch_svg_output_rejected() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.svg");
-    let result = dispatch(&input, &out, ImageFormat::SVG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::SVG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("SVG output is not supported"));
@@ -122,7 +133,12 @@ mod tests {
     let out = _dir.path().join("out.png");
     // Create output file in advance
     std::fs::write(&out, b"dummy").unwrap();
-    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::FileExists(_)));
   }
@@ -131,7 +147,12 @@ mod tests {
   fn dispatch_success_png_to_jpg() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.jpg");
-    let result = dispatch(&input, &out, ImageFormat::JPG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -140,7 +161,12 @@ mod tests {
   fn dispatch_success_png_to_webp() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.webp");
-    let result = dispatch(&input, &out, ImageFormat::WEBP, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -149,7 +175,12 @@ mod tests {
   fn dispatch_success_png_to_png() {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.png");
-    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -159,7 +190,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.png");
-    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
@@ -170,7 +206,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.jpg");
-    let result = dispatch(&input, &out, ImageFormat::JPG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
@@ -181,7 +222,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_temp_svg(&dir);
     let out = dir.path().join("out.webp");
-    let result = dispatch(&input, &out, ImageFormat::WEBP, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
     assert!(out.metadata().unwrap().len() > 0);
@@ -191,7 +237,12 @@ mod tests {
   fn dispatch_success_ico_to_png() {
     let (input, _dir) = create_temp_ico();
     let out = _dir.path().join("out.png");
-    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -200,7 +251,12 @@ mod tests {
   fn dispatch_success_ico_to_jpg() {
     let (input, _dir) = create_temp_ico();
     let out = _dir.path().join("out.jpg");
-    let result = dispatch(&input, &out, ImageFormat::JPG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -209,7 +265,12 @@ mod tests {
   fn dispatch_success_ico_to_webp() {
     let (input, _dir) = create_temp_ico();
     let out = _dir.path().join("out.webp");
-    let result = dispatch(&input, &out, ImageFormat::WEBP, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -221,7 +282,12 @@ mod tests {
     // Create output file in advance (same as dispatch_output_file_already_exists)
     std::fs::write(&out, b"dummy").unwrap();
     // With overwrite=true, this should succeed instead of returning FileExists
-    let result = dispatch(&input, &out, ImageFormat::PNG, true, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: true,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
     // Content should be the converted image, not the dummy bytes
@@ -233,7 +299,12 @@ mod tests {
     let (input, _dir) = create_temp_png();
     let out = _dir.path().join("out.png");
     std::fs::write(&out, b"dummy").unwrap();
-    let result = dispatch(&input, &out, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), ImageConvertError::FileExists(_)));
   }
@@ -242,7 +313,12 @@ mod tests {
   fn dispatch_same_file_rejected() {
     let (input, _dir) = create_temp_png();
     // Input and output are the same path — should be rejected
-    let result = dispatch(&input, &input, ImageFormat::PNG, false, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = dispatch(&input, &input, &opts);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("Same input and output paths are not allowed"));
@@ -252,7 +328,12 @@ mod tests {
   fn dispatch_same_file_rejected_even_with_overwrite() {
     let (input, _dir) = create_temp_png();
     // Even with overwrite=true, same-file should be rejected
-    let result = dispatch(&input, &input, ImageFormat::PNG, true, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: true,
+    };
+    let result = dispatch(&input, &input, &opts);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("Same input and output paths are not allowed"));

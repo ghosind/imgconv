@@ -2,8 +2,8 @@ use std::path::Path;
 
 use image::DynamicImage;
 
+use crate::converter::options::ConverterOptions;
 use crate::core::format::ImageFormat;
-use crate::core::traits::ImageProcessor;
 use crate::error::convert::ImageConvertError;
 
 /// Encodes a [`DynamicImage`] to the specified format and writes it to disk.
@@ -14,13 +14,14 @@ use crate::error::convert::ImageConvertError;
 /// SVG output is rejected with an [`ImageConvertError::UnsupportedFormat`].
 pub fn encode_image(
   img: &mut DynamicImage,
-  format: ImageFormat,
   output_path: &Path,
-  processors: Vec<Box<dyn ImageProcessor>>,
+  options: &ConverterOptions,
 ) -> Result<(), ImageConvertError> {
-  for processor in processors {
+  for processor in &options.processors {
     processor.process(img)?;
   }
+
+  let format = options.target_format;
 
   let file = std::fs::File::create(output_path)?;
   let mut writer = std::io::BufWriter::new(file);
@@ -49,7 +50,6 @@ pub fn encode_image(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use image::DynamicImage;
 
   fn make_test_image() -> DynamicImage {
     DynamicImage::new_rgba8(4, 4)
@@ -60,7 +60,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.png");
-    let result = encode_image(&mut img, ImageFormat::PNG, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -70,7 +75,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.jpg");
-    let result = encode_image(&mut img, ImageFormat::JPG, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -80,7 +90,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.webp");
-    let result = encode_image(&mut img, ImageFormat::WEBP, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::WEBP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -90,7 +105,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.ico");
-    let result = encode_image(&mut img, ImageFormat::ICO, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::ICO,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -100,7 +120,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.avif");
-    let result = encode_image(&mut img, ImageFormat::AVIF, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::AVIF,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok(), "AVIF encode failed: {:?}", result.err());
     assert!(out.exists());
   }
@@ -110,7 +135,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.bmp");
-    let result = encode_image(&mut img, ImageFormat::BMP, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::BMP,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -120,7 +150,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.tiff");
-    let result = encode_image(&mut img, ImageFormat::TIFF, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::TIFF,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
   }
@@ -130,7 +165,12 @@ mod tests {
     let mut img = make_test_image();
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.svg");
-    let result = encode_image(&mut img, ImageFormat::SVG, &out, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::SVG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("not supported"));
@@ -139,11 +179,15 @@ mod tests {
   #[test]
   fn encode_to_nonexistent_directory_fails() {
     let mut img = make_test_image();
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
     let result = encode_image(
       &mut img,
-      ImageFormat::PNG,
       std::path::Path::new("/nonexistent_dir_xyz/test.png"),
-      vec![],
+      &opts,
     );
     assert!(result.is_err());
   }
@@ -154,7 +198,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("test.png");
     let processor = crate::processor::resize::ResizeProcessor::new(Some(32), None);
-    let result = encode_image(&mut img, ImageFormat::PNG, &out, vec![Box::new(processor)]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![Box::new(processor)],
+      overwrite: false,
+    };
+    let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
     assert!(out.exists());
     // Verify the resize was applied

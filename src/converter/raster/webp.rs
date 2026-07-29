@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use crate::core::format::ImageFormat;
-use crate::core::traits::{ImageConverter, ImageProcessor};
-use crate::error::convert::ImageConvertError;
+use crate::converter::options::ConverterOptions;
 use crate::converter::raster::util::convert;
+use crate::core::traits::ImageConverter;
+use crate::error::convert::ImageConvertError;
 
 /// Converter for WEBP input images.
 ///
@@ -15,18 +15,17 @@ impl ImageConverter for WEBPConverter {
     &self,
     input_path: &Path,
     output_path: &Path,
-    target_format: ImageFormat,
-    processors: Vec<Box<dyn ImageProcessor>>,
+    options: &ConverterOptions,
   ) -> Result<(), ImageConvertError> {
-    convert(input_path, output_path, target_format, processors)
+    convert(input_path, output_path, options)
   }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::core::format::ImageFormat;
   use image::DynamicImage;
-  use crate::core::traits::ImageConverter;
 
   fn create_test_webp(dir: &tempfile::TempDir) -> std::path::PathBuf {
     let path = dir.path().join("input.webp");
@@ -40,7 +39,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_webp(&dir);
     let output = dir.path().join("out.png");
-    let result = WEBPConverter.convert(&input, &output, ImageFormat::PNG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = WEBPConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
@@ -50,7 +54,12 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let input = create_test_webp(&dir);
     let output = dir.path().join("out.jpg");
-    let result = WEBPConverter.convert(&input, &output, ImageFormat::JPG, vec![]);
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+    };
+    let result = WEBPConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
     assert!(output.exists());
   }
