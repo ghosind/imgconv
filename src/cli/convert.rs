@@ -55,6 +55,13 @@ pub struct ConvertArgs {
   /// If omitted, `lanczos3` is used.
   #[arg(long, verbatim_doc_comment)]
   pub filter: Option<String>,
+
+  /// Output image quality (`-q` / `--quality`). Range: 1–100.
+  ///
+  /// Applies to formats that support lossy compression (JPEG for now).
+  /// Higher values produce better quality but larger file sizes.
+  #[arg(short = 'q', long, value_parser = clap::value_parser!(u8).range(1..=100))]
+  pub quality: Option<u8>,
 }
 
 /// Executes the image conversion workflow for the `convert` subcommand.
@@ -88,6 +95,7 @@ pub fn convert(cli: &Cli, args: &ConvertArgs) -> Result<(), Box<dyn std::error::
     target_format: output_format,
     processors,
     overwrite: cli.overwrite,
+    quality: args.quality,
   };
 
   dispatcher::dispatch(input_path, &output_path, &options)?;
@@ -150,6 +158,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("custom.png"));
@@ -165,6 +174,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("photo.png"));
@@ -180,6 +190,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("file_without_ext.png"));
@@ -195,6 +206,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("output.jpg"));
@@ -210,6 +222,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
     let result = determine_output_path(&args).unwrap();
     assert_eq!(result, PathBuf::from("image.png"));
@@ -231,6 +244,7 @@ mod tests {
       height: None,
       help: None,
       filter: None,
+      quality: None,
     };
 
     let cli = Cli {
@@ -247,6 +261,7 @@ mod tests {
           target_format: ImageFormat::from_str(&args.format.as_ref().unwrap()).unwrap(),
           processors: vec![],
           overwrite: false,
+          quality: None,
         };
         let result = crate::core::dispatcher::dispatch(
           std::path::Path::new(&args.input),

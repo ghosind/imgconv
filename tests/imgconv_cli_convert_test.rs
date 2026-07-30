@@ -644,3 +644,124 @@ fn cli_help_shows_width_height_options() {
   assert!(stdout.contains("--width") || stdout.contains("-w"));
   assert!(stdout.contains("--height") || stdout.contains("-h"));
 }
+
+#[test]
+fn cli_convert_jpg_with_quality() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.jpg");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("-q")
+    .arg("80")
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+  // Verify it's a valid JPEG
+  let img = image::open(&output).unwrap();
+  assert_eq!(img.width(), 4);
+  assert_eq!(img.height(), 4);
+}
+
+#[test]
+fn cli_convert_jpg_quality_via_long_flag() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+  let output = dir.path().join("output.jpg");
+
+  let status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(output.to_str().unwrap())
+    .arg("--quality")
+    .arg("60")
+    .status()
+    .unwrap();
+
+  assert!(status.success());
+  assert!(output.exists());
+}
+
+#[test]
+fn cli_convert_jpg_quality_affects_file_size() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+
+  // Low quality
+  let low_out = dir.path().join("low.jpg");
+  let low_status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(low_out.to_str().unwrap())
+    .arg("-q")
+    .arg("10")
+    .status()
+    .unwrap();
+  assert!(low_status.success());
+
+  // High quality
+  let high_out = dir.path().join("high.jpg");
+  let high_status = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-o")
+    .arg(high_out.to_str().unwrap())
+    .arg("-q")
+    .arg("95")
+    .status()
+    .unwrap();
+  assert!(high_status.success());
+
+  let low_size = low_out.metadata().unwrap().len();
+  let high_size = high_out.metadata().unwrap().len();
+  assert!(
+    high_size > low_size,
+    "high quality ({}) should produce larger file than low quality ({})",
+    high_size,
+    low_size,
+  );
+}
+
+#[test]
+fn cli_convert_quality_zero_rejected() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-q")
+    .arg("0")
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(stderr.contains("error:"), "Expected error for quality=0, got: {}", stderr);
+}
+
+#[test]
+fn cli_convert_quality_above_max_rejected() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "input.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("convert")
+    .arg(input.to_str().unwrap())
+    .arg("-q")
+    .arg("101")
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(stderr.contains("error:"), "Expected error for quality=101, got: {}", stderr);
+}

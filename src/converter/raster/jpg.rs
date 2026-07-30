@@ -43,6 +43,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = JPGConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());
@@ -58,6 +59,7 @@ mod tests {
       target_format: ImageFormat::WEBP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = JPGConverter.convert(&input, &output, &opts);
     assert!(result.is_ok());

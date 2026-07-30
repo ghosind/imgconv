@@ -160,4 +160,102 @@ mod tests {
       }
     }
   }
+
+  #[test]
+  fn parse_quality_short_flag() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "85",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.quality, Some(85));
+      }
+    }
+  }
+
+  #[test]
+  fn parse_quality_long_flag() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "--quality", "50",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.quality, Some(50));
+      }
+    }
+  }
+
+  #[test]
+  fn parse_quality_defaults_to_none() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.quality, None);
+      }
+    }
+  }
+
+  #[test]
+  fn parse_quality_min_boundary() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "1",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.quality, Some(1));
+      }
+    }
+  }
+
+  #[test]
+  fn parse_quality_max_boundary() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "100",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.quality, Some(100));
+      }
+    }
+  }
+
+  #[test]
+  fn parse_quality_zero_rejected() {
+    let result = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "0",
+    ]);
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn parse_quality_above_max_rejected() {
+    let result = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "101",
+    ]);
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn parse_quality_non_numeric_rejected() {
+    let result = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-q", "abc",
+    ]);
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn parse_quality_alongside_other_flags() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "convert", "input.png", "-f", "jpg", "-q", "75", "-w", "100",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Convert(args) => {
+        assert_eq!(args.format.as_deref(), Some("jpg"));
+        assert_eq!(args.quality, Some(75));
+        assert_eq!(args.width, Some(100));
+      }
+    }
+  }
 }

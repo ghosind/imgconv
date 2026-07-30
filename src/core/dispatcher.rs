@@ -85,6 +85,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(
       Path::new("/nonexistent/path/file.png"),
@@ -106,6 +107,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&bad_input, &out, &opts);
     assert!(result.is_err());
@@ -120,6 +122,7 @@ mod tests {
       target_format: ImageFormat::SVG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
@@ -137,6 +140,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
@@ -151,6 +155,7 @@ mod tests {
       target_format: ImageFormat::JPG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -165,6 +170,7 @@ mod tests {
       target_format: ImageFormat::WEBP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -179,6 +185,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -194,6 +201,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -210,6 +218,7 @@ mod tests {
       target_format: ImageFormat::JPG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -226,6 +235,7 @@ mod tests {
       target_format: ImageFormat::WEBP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -241,6 +251,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -255,6 +266,7 @@ mod tests {
       target_format: ImageFormat::JPG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -269,6 +281,7 @@ mod tests {
       target_format: ImageFormat::WEBP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -286,6 +299,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: true,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_ok());
@@ -303,6 +317,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &out, &opts);
     assert!(result.is_err());
@@ -317,6 +332,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = dispatch(&input, &input, &opts);
     assert!(result.is_err());
@@ -332,6 +348,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: true,
+      quality: None,
     };
     let result = dispatch(&input, &input, &opts);
     assert!(result.is_err());

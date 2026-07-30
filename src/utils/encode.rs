@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use image::DynamicImage;
+use image::{DynamicImage, ImageEncoder, ExtendedColorType};
+use image::codecs::jpeg::JpegEncoder;
 
 use crate::converter::options::ConverterOptions;
 use crate::core::format::ImageFormat;
@@ -10,8 +11,11 @@ use crate::error::convert::ImageConvertError;
 ///
 /// Supports in-place processing (e.g., resizing) via `processors` before encoding.
 ///
-/// Supported output formats: PNG, JPG, WEBP.
+/// Supported output formats: PNG, JPG, WEBP, AVIF, BMP, ICO, TIFF.
 /// SVG output is rejected with an [`ImageConvertError::UnsupportedFormat`].
+///
+/// When a `quality` value is set in `options`, it is used for lossy formats
+/// that support it (JPEG only for now). For other formats the encoder's default is used.
 pub fn encode_image(
   img: &mut DynamicImage,
   output_path: &Path,
@@ -31,6 +35,16 @@ pub fn encode_image(
       return Err(ImageConvertError::UnsupportedFormat(
         "SVG output is not supported.".into(),
       ));
+    }
+    ImageFormat::JPG => {
+      if let Some(q) = options.quality {
+        let rgb = img.to_rgb8();
+        let (width, height) = rgb.dimensions();
+        JpegEncoder::new_with_quality(&mut writer, q)
+          .write_image(&rgb, width, height, ExtendedColorType::Rgb8)?;
+      } else {
+        img.write_to(&mut writer, format.image_format().unwrap())?;
+      }
     }
     format => {
       if let Some(image_format) = format.image_format() {
@@ -64,6 +78,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -79,6 +94,79 @@ mod tests {
       target_format: ImageFormat::JPG,
       processors: vec![],
       overwrite: false,
+      quality: None,
+    };
+    let result = encode_image(&mut img, &out, &opts);
+    assert!(result.is_ok());
+    assert!(out.exists());
+  }
+
+  #[test]
+  fn encode_jpg_with_quality() {
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test_quality.jpg");
+    let opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+      quality: Some(85),
+    };
+    let result = encode_image(&mut img, &out, &opts);
+    assert!(result.is_ok());
+    assert!(out.exists());
+    // Should produce a valid JPEG
+    let decoded = image::open(&out).unwrap();
+    assert_eq!(decoded.width(), 4);
+    assert_eq!(decoded.height(), 4);
+  }
+
+  #[test]
+  fn encode_jpg_high_quality_larger_than_low() {
+    let mut img = DynamicImage::new_rgba8(100, 100);
+    let dir = tempfile::tempdir().unwrap();
+
+    // Encode with low quality
+    let low_out = dir.path().join("low.jpg");
+    let low_opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+      quality: Some(10),
+    };
+    encode_image(&mut img, &low_out, &low_opts).unwrap();
+
+    // Encode with high quality
+    let high_out = dir.path().join("high.jpg");
+    let high_opts = ConverterOptions {
+      target_format: ImageFormat::JPG,
+      processors: vec![],
+      overwrite: false,
+      quality: Some(95),
+    };
+    encode_image(&mut img, &high_out, &high_opts).unwrap();
+
+    let low_size = low_out.metadata().unwrap().len();
+    let high_size = high_out.metadata().unwrap().len();
+    assert!(
+      high_size > low_size,
+      "high quality ({}) should produce larger file than low quality ({})",
+      high_size,
+      low_size,
+    );
+  }
+
+  #[test]
+  fn encode_png_with_quality_ignored() {
+    // PNG is lossless — quality is ignored, but should still produce valid output
+    let mut img = make_test_image();
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("test.png");
+    let opts = ConverterOptions {
+      target_format: ImageFormat::PNG,
+      processors: vec![],
+      overwrite: false,
+      quality: Some(50),
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -94,6 +182,7 @@ mod tests {
       target_format: ImageFormat::WEBP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -109,6 +198,7 @@ mod tests {
       target_format: ImageFormat::ICO,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -124,6 +214,7 @@ mod tests {
       target_format: ImageFormat::AVIF,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok(), "AVIF encode failed: {:?}", result.err());
@@ -139,6 +230,7 @@ mod tests {
       target_format: ImageFormat::BMP,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -154,6 +246,7 @@ mod tests {
       target_format: ImageFormat::TIFF,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
@@ -169,6 +262,7 @@ mod tests {
       target_format: ImageFormat::SVG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_err());
@@ -183,6 +277,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(
       &mut img,
@@ -202,6 +297,7 @@ mod tests {
       target_format: ImageFormat::PNG,
       processors: vec![Box::new(processor)],
       overwrite: false,
+      quality: None,
     };
     let result = encode_image(&mut img, &out, &opts);
     assert!(result.is_ok());
