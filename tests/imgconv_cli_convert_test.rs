@@ -765,3 +765,82 @@ fn cli_convert_quality_above_max_rejected() {
   let stderr = String::from_utf8_lossy(&output_result.stderr);
   assert!(stderr.contains("error:"), "Expected error for quality=101, got: {}", stderr);
 }
+
+#[test]
+fn cli_info_png() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_png(dir.path(), "info.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("info")
+    .arg(input.to_str().unwrap())
+    .output()
+    .unwrap();
+
+  assert!(output_result.status.success());
+  let stdout = String::from_utf8_lossy(&output_result.stdout);
+  assert!(stdout.contains("File:"), "Expected File line, got: {}", stdout);
+  assert!(stdout.contains("Format:"), "Expected Format line, got: {}", stdout);
+  assert!(stdout.contains("Width:"), "Expected Width line, got: {}", stdout);
+  assert!(stdout.contains("Height:"), "Expected Height line, got: {}", stdout);
+  assert!(stdout.contains("4 px"), "Expected 4x4 dimensions, got: {}", stdout);
+}
+
+#[test]
+fn cli_info_svg() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = create_test_svg(dir.path(), "info.svg");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("info")
+    .arg(input.to_str().unwrap())
+    .output()
+    .unwrap();
+
+  assert!(output_result.status.success());
+  let stdout = String::from_utf8_lossy(&output_result.stdout);
+  assert!(stdout.contains("SVG"), "Expected SVG format, got: {}", stdout);
+  assert!(stdout.contains("Width:"), "Expected Width line, got: {}", stdout);
+  assert!(stdout.contains("Height:"), "Expected Height line, got: {}", stdout);
+}
+
+#[test]
+fn cli_info_file_not_found() {
+  let dir = tempfile::tempdir().unwrap();
+  let missing = dir.path().join("missing.png");
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("info")
+    .arg(missing.to_str().unwrap())
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(
+    stderr.contains("File not found") || stderr.contains("Error"),
+    "Expected error output, got: {}",
+    stderr,
+  );
+}
+
+#[test]
+fn cli_info_unsupported_extension() {
+  let dir = tempfile::tempdir().unwrap();
+  let input = dir.path().join("file.xyz");
+  std::fs::write(&input, b"whatever").unwrap();
+
+  let output_result = Command::new(env!("CARGO_BIN_EXE_imgconv"))
+    .arg("info")
+    .arg(input.to_str().unwrap())
+    .output()
+    .unwrap();
+
+  assert!(!output_result.status.success());
+  let stderr = String::from_utf8_lossy(&output_result.stderr);
+  assert!(
+    stderr.contains("Unsupported image format") || stderr.contains("Error"),
+    "Expected error output, got: {}",
+    stderr,
+  );
+}

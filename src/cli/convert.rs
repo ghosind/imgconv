@@ -271,6 +271,7 @@ mod tests {
         assert!(result.is_ok());
         assert!(out_path.exists());
       }
+      _ => {}
     }
   }
 }

@@ -2,6 +2,7 @@ use clap::Parser;
 
 use crate::cli::args::{Cli, Commands};
 use crate::cli::convert::convert;
+use crate::cli::info::info;
 use crate::utils::output::Output;
 
 /// Parses CLI arguments and executes the appropriate subcommand.
@@ -15,6 +16,7 @@ pub fn run() {
 
   let result = match &cli.command {
     Commands::Convert(args) => convert(&cli, args),
+    Commands::Info(args) => info(&cli, args),
   };
 
   if let Err(e) = result {

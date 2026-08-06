@@ -1,6 +1,7 @@
 use clap::{ArgAction, Parser, Subcommand};
 
 use crate::cli::convert::ConvertArgs;
+use crate::cli::info::InfoArgs;
 
 /// CLI argument structure for the application.
 ///
@@ -30,6 +31,9 @@ pub struct Cli {
 pub enum Commands {
   /// Convert an image from one format to another with the specified options.
   Convert(ConvertArgs),
+
+  /// Print information about an image file.
+  Info(InfoArgs),
 }
 
 #[cfg(test)]
@@ -48,6 +52,7 @@ mod tests {
         assert!(args.format.is_none());
         assert!(args.output.is_none());
       }
+      _ => {}
     }
   }
 
@@ -61,6 +66,7 @@ mod tests {
         assert_eq!(args.input, "input.jpg");
         assert_eq!(args.output.as_deref(), Some("output.png"));
       }
+      _ => {}
     }
   }
 
@@ -73,6 +79,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.format.as_deref(), Some("jpg"));
       }
+      _ => {}
     }
   }
 
@@ -89,6 +96,7 @@ mod tests {
         assert_eq!(args.output.as_deref(), Some("result.jpg"));
         assert_eq!(args.format.as_deref(), Some("jpg"));
       }
+      _ => {}
     }
   }
 
@@ -158,6 +166,7 @@ mod tests {
         assert_eq!(args.input, "input.png");
         assert_eq!(args.format.as_deref(), Some("jpg"));
       }
+      _ => {}
     }
   }
 
@@ -170,6 +179,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.quality, Some(85));
       }
+      _ => {}
     }
   }
 
@@ -182,6 +192,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.quality, Some(50));
       }
+      _ => {}
     }
   }
 
@@ -194,6 +205,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.quality, None);
       }
+      _ => {}
     }
   }
 
@@ -206,6 +218,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.quality, Some(1));
       }
+      _ => {}
     }
   }
 
@@ -218,6 +231,7 @@ mod tests {
       Commands::Convert(args) => {
         assert_eq!(args.quality, Some(100));
       }
+      _ => {}
     }
   }
 
@@ -256,6 +270,40 @@ mod tests {
         assert_eq!(args.quality, Some(75));
         assert_eq!(args.width, Some(100));
       }
+      _ => {}
     }
+  }
+
+  #[test]
+  fn parse_basic_info() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "info", "input.png",
+    ]).unwrap();
+    match &cli.command {
+      Commands::Info(args) => {
+        assert_eq!(args.input, "input.png");
+      }
+      _ => panic!("expected Info command"),
+    }
+  }
+
+  #[test]
+  fn parse_info_with_quiet() {
+    let cli = Cli::try_parse_from([
+      "imgconv", "-Q", "info", "photo.jpg",
+    ]).unwrap();
+    assert!(cli.quiet);
+    match &cli.command {
+      Commands::Info(args) => {
+        assert_eq!(args.input, "photo.jpg");
+      }
+      _ => panic!("expected Info command"),
+    }
+  }
+
+  #[test]
+  fn parse_info_missing_input_is_error() {
+    let result = Cli::try_parse_from(["imgconv", "info"]);
+    assert!(result.is_err());
   }
 }
